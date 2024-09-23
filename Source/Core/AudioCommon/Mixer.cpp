@@ -18,6 +18,10 @@
 #include "Core/Core.h"
 #include "Core/System.h"
 
+#include "Common/Config/Config.h"
+#include "Core/Config/GraphicsSettings.h"
+#include "VideoCommon/Mister.h"
+
 static u32 DPL2QualityToFrameBlockSize(AudioCommon::DPL2Quality quality)
 {
   switch (quality)
@@ -182,6 +186,16 @@ std::size_t Mixer::Mix(s16* samples, std::size_t num_samples)
     if (!m_config_gba_routing_enabled || !m_config_gba_output_enabled[i])
       m_gba_mixers[i].Mix(samples, num_samples);
   }
+
+  // Copy audio samples to groovy mister thread to be sent over network.
+  if (g_mister.isConnected() && Config::Get(Config::GFX_GROOVY_AUDIO))
+  {
+    char* tmp_buffer = g_mister.getPBufferAudio();
+    const uint16_t num_channels = 2;  // hardcoded...
+    memcpy(tmp_buffer + g_mister.getAudioSamples(), samples, num_samples * num_channels * 2);
+    g_mister.setAudioSamples(num_samples * num_channels * 2);  
+    //Don't blit audio here because another thread is sending frame (VideoInterface.cpp), so we can't mix udp packets   
+  } 
 
   return num_samples;
 }

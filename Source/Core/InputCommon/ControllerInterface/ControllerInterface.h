@@ -39,6 +39,8 @@
 #define CIFACE_USE_STEAMDECK
 #endif
 
+#define CIFACE_USE_MISTER
+
 namespace ciface
 {
 // A thread local "input channel" is maintained to handle the state of relative inputs.
@@ -119,8 +121,6 @@ public:
 
   static void SetCurrentInputChannel(ciface::InputChannel);
   static ciface::InputChannel GetCurrentInputChannel();
-
-  WindowSystemInfo GetWindowSystemInfo() const;
 
 private:
   void ClearDevices();

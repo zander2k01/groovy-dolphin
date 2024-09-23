@@ -32,6 +32,10 @@
 #include "VideoCommon/VideoConfig.h"
 #include "VideoCommon/VideoEvents.h"
 
+#include "Common/Config/Config.h"
+#include "Core/Config/GraphicsSettings.h"
+#include "VideoCommon/Mister.h"
+
 namespace CoreTiming
 {
 static constexpr int MAX_SLICE_LENGTH = 20000;
@@ -457,6 +461,16 @@ void CoreTimingManager::Throttle(const s64 target_cycle)
   }};
 
   if (IsSpeedUnlimited())
+  {
+    ResetThrottle(target_cycle);
+    m_throttle_disable_vi_int = false;
+    return;
+  }
+
+  // Groovy MiSTer: when streaming, the MiSTer's vsync (in the blit) paces emulation,
+  // so skip Dolphin's own throttling. Reset the reference so there is no catch-up burst
+  // if the MiSTer disconnects.
+  if (Config::Get(Config::GFX_GROOVY_ENABLE) && g_mister.isConnected())
   {
     ResetThrottle(target_cycle);
     m_throttle_disable_vi_int = false;

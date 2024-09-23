@@ -23,6 +23,7 @@
 #include "DolphinQt/Config/ConfigControls/ConfigChoice.h"
 #include "DolphinQt/Config/ConfigControls/ConfigInteger.h"
 #include "DolphinQt/Config/ConfigControls/ConfigRadio.h"
+#include "DolphinQt/Config/ConfigControls/ConfigText.h"
 #include "DolphinQt/Config/GameConfigWidget.h"
 #include "DolphinQt/Config/Graphics/GraphicsPane.h"
 #include "DolphinQt/Config/ToolTipControls/ToolTipComboBox.h"
@@ -140,9 +141,72 @@ void GeneralWidget::CreateWidgets()
   shader_compilation_layout->addWidget(m_wait_for_shaders);
   shader_compilation_box->setLayout(shader_compilation_layout);
 
+  // Groovy MiSTer
+  auto* groovy_mister_box = new QGroupBox(tr("Groovy MiSTer"));
+  auto* groovy_mister_layout = new QGridLayout();
+
+  m_groovy_enable =
+      new ConfigBool(tr("Enable MiSTer Output"), Config::GFX_GROOVY_ENABLE, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_enable, 0, 0);
+
+  groovy_mister_layout->addWidget(new QLabel(tr("MiSTer IP:")), 1, 0);
+  m_groovy_ip = new ConfigText(Config::GFX_GROOVY_IP, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_ip, 1, 1);
+
+  m_groovy_fill_screen =
+      new ConfigBool(tr("Scale Contents to Fill Screen"), Config::GFX_GROOVY_SCALE, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_fill_screen, 2, 0, 1, 2);
+
+  m_groovy_auto_vsync = new ConfigBool(tr("Automatic V-Sync (or choose line to sync)"),
+                                       Config::GFX_GROOVY_AUTO_VSYNC, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_auto_vsync, 3, 0);
+  m_groovy_vsync = new ConfigInteger(1, 400, Config::GFX_GROOVY_VSYNC, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_vsync, 3, 1);
+
+  m_groovy_lz4 = new ConfigBool(tr("LZ4 Frames (less bandwidth, more CPU)"),
+                                Config::GFX_GROOVY_LZ4, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_lz4, 4, 0);
+  m_groovy_lz4_delta = new ConfigBool(tr("Delta Frames (only send changes, more CPU)"),
+                                      Config::GFX_GROOVY_LZ4_DELTA, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_lz4_delta, 4, 1);
+
+  m_groovy_jumbo =
+      new ConfigBool(tr("Jumbo Frames (MTU 3800)"), Config::GFX_GROOVY_JUMBO, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_jumbo, 5, 0);
+
+  m_groovy_prog_fb = new ConfigBool(tr("Progressive Framebuffer (for scandoubler)"),
+                                    Config::GFX_GROOVY_PROG_FB, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_prog_fb, 6, 0);
+
+  m_groovy_audio = new ConfigBool(tr("Send Audio"), Config::GFX_GROOVY_AUDIO, m_game_layer);
+  groovy_mister_layout->addWidget(m_groovy_audio, 7, 0);
+
+  auto* groovy_video_groupbox = new QGroupBox(tr("TV/Monitor"));
+  auto* groovy_video_vboxlayout = new QVBoxLayout;
+  groovy_video_groupbox->setLayout(groovy_video_vboxlayout);
+
+  // Order must match Config::GroovyVideoMode.
+  const std::array<const char*, 4> groovy_modes = {{
+      QT_TR_NOOP("Auto NTSC/PAL (15 kHz)"),
+      QT_TR_NOOP("NTSC, Force 240p (15 kHz)"),
+      QT_TR_NOOP("NTSC Only (15 kHz)"),
+      QT_TR_NOOP("VGA (31 kHz)"),
+  }};
+  for (size_t i = 0; i < groovy_modes.size(); i++)
+  {
+    m_groovy_video_mode[i] = new ConfigRadioInt(tr(groovy_modes[i]), Config::GFX_GROOVY_VIDEO_MODE,
+                                                static_cast<int>(i), m_game_layer);
+    groovy_video_vboxlayout->addWidget(m_groovy_video_mode[i]);
+  }
+  groovy_video_vboxlayout->addStretch();
+  groovy_mister_layout->addWidget(groovy_video_groupbox, 0, 3, 4, 1);
+
+  groovy_mister_box->setLayout(groovy_mister_layout);
+
   main_layout->addWidget(m_video_box);
   main_layout->addWidget(m_options_box);
   main_layout->addWidget(shader_compilation_box);
+  main_layout->addWidget(groovy_mister_box);
   main_layout->addStretch();
 
   setLayout(main_layout);
@@ -213,6 +277,14 @@ void GeneralWidget::OnEmulationStateChanged(bool running)
   m_backend_combo->setEnabled(!running);
   m_render_main_window->setEnabled(!running);
   m_enable_fullscreen->setEnabled(!running);
+
+  // Groovy MiSTer: connection settings only apply when emulation starts.
+  m_groovy_enable->setEnabled(!running);
+  m_groovy_ip->setEnabled(!running);
+  m_groovy_jumbo->setEnabled(!running);
+  m_groovy_lz4->setEnabled(!running);
+  m_groovy_lz4_delta->setEnabled(!running);
+  m_groovy_prog_fb->setEnabled(!running);
 
   const bool supports_adapters = !g_backend_info.Adapters.empty();
   m_adapter_combo->setEnabled(!running && supports_adapters);

@@ -36,6 +36,7 @@
 #include "VideoCommon/VideoBackendBase.h"
 #include "VideoCommon/VideoConfig.h"
 #include "VideoCommon/VideoEvents.h"
+#include "VideoCommon/Mister.h"
 
 namespace VideoInterface
 {
@@ -885,6 +886,18 @@ void VideoInterfaceManager::EndField(FieldType field, u64 ticks)
   // Currently, this is only known to be necessary to eliminate flickering in WWE Crush Hour.
   if (!Config::Get(Config::GFX_HACK_EARLY_XFB_OUTPUT))
     OutputField(field, ticks);
+
+  // Groovy MiSTer: send the frame (and audio) to the MiSTer on every vblank, whether the game
+  // runs at 30 or 60 fps. When streaming, the MiSTer's vsync paces emulation (see Throttle).
+  if (Config::Get(Config::GFX_GROOVY_ENABLE) && g_mister.isConnected())
+  {
+    const bool auto_vsync = Config::Get(Config::GFX_GROOVY_AUTO_VSYNC);
+    const int vsync = Config::Get(Config::GFX_GROOVY_VSYNC);
+    const int mister_field = g_mister.getField();
+    if (Config::Get(Config::GFX_GROOVY_AUDIO))
+      g_mister.BlitAudio();
+    g_mister.Blit(auto_vsync ? 0 : vsync, mister_field);
+  }
 
   // Note: OutputField above doesn't present when using GPU-on-Thread or Early/Immediate XFB,
   //  giving "VBlank" measurements here poor pacing without a Throttle call.
