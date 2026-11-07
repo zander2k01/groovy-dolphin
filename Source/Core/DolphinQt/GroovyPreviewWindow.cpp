@@ -21,7 +21,7 @@ GroovyPreviewWindow::GroovyPreviewWindow() : QWidget(nullptr)
 {
   // No parent: this needs to be its own top-level window (with a taskbar entry) so screen
   // sharing tools list it separately from the main Dolphin window.
-  setWindowTitle(tr("Groovy MiSTer Preview"));
+  setWindowTitle(tr("Groovy MiSTer: Sent Frames"));
   setWindowIcon(Resources::GetAppIcon());
   setAttribute(Qt::WA_OpaquePaintEvent);
   resize(640, 480);

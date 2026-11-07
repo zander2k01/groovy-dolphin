@@ -16,9 +16,9 @@ namespace Core
 enum class State;
 }
 
-// Groovy MiSTer: a separate window on the PC that shows the picture being sent to the MiSTer.
-// It's a normal top-level window with its own title, so it can be shared on Discord or captured
-// by streaming software. Enabled with "Show PC Preview Window" in the Groovy MiSTer settings.
+// Groovy MiSTer: a separate window on the PC that shows each frame exactly as it's sent to the
+// MiSTer (before compression). Mostly for troubleshooting: if it looks right but the CRT doesn't,
+// the problem is in sending. Enabled with "Show Sent Frame Window" in the Groovy MiSTer settings.
 class GroovyPreviewWindow final : public QWidget
 {
   Q_OBJECT
