@@ -10,7 +10,7 @@ None of this would exist without psakhis, who made the Groovy core and the newes
 
 **[Latest Windows build](https://github.com/zander2k01/groovy-dolphin/releases/download/latest/groovy-dolphin-windows-x64.zip)**
 
-Unzip it anywhere and run Dolphin.exe. It's portable, so your settings and saves stay in that folder and won't mess with a normal Dolphin install.
+Unzip it anywhere and run Dolphin.exe. The build is portable: settings and saves are stored in that folder and do not affect a regular Dolphin installation.
 
 ## What you need
 
@@ -19,29 +19,29 @@ Unzip it anywhere and run Dolphin.exe. It's portable, so your settings and saves
   [Groovy]
   main=MiSTer_groovy
   ```
-- A wired gigabit connection between the PC and the MiSTer (direct cable or a gigabit switch).
-- In the Groovy core's own menu on the MiSTer, turn **Audio** on (it's off by default). If you want to use a controller plugged into the MiSTer, also set **Server > Joysticks** to Analog.
+- A network connection between the PC and the MiSTer. A wired gigabit connection (direct cable or gigabit switch) is strongly recommended.
+- In the Groovy core's menu on the MiSTer, set **Audio** to On (it is off by default). To use controllers connected to the MiSTer, also set **Server > Joysticks** to Analog.
 
 ## Setup
 
 1. Load **Utility > Groovy** on the MiSTer.
 2. In Dolphin go to **Settings > Groovy MiSTer**, tick **Enable MiSTer Output** and type in your MiSTer's IP.
-3. Pick your **Display** (CRT TV is the default, so for a normal CRT TV you don't have to touch it) and start a game.
+3. Select your **Display** type (the default, CRT TV, is correct for standard 15 kHz CRT TVs) and start a game.
 
-If the MiSTer isn't ready yet, Dolphin keeps trying on its own and tells you what's going on in its window.
+If the MiSTer is not ready yet, Dolphin retries automatically and shows the connection status in its window.
 
-## What's new compared to psakhis's last build
+## Changes from psakhis's last build
 
-- Based on current Dolphin instead of a 2024 one
-- The picture is the same size as on a real GameCube now, so the edges don't get cut off (the overscan problem psakhis mentioned)
-- Way fewer settings, and they have their own page now. Stuff like compression and picture size just works, so you just pick what kind of display you have and put in the IP
-- Got rid of Delta Frames, which left junk on screen and isn't needed on a wired connection
-- Reconnects by itself if the Groovy core gets started late or restarted
-- On-screen messages for things like "can't find the MiSTer" or "audio is off in the Groovy core"
-- 240p option per game, already on for some retro collections (Sonic, Mega Man, Midway, Namco Museum)
-- PAL games play at the right speed in 240p mode (288p)
-- NetPlay works with friends on official Dolphin, as long as they use the version shown in Help > About
-- A bunch of smaller fixes (audio crackle, a possible crash with PAL games, the controller code)
+- Based on current Dolphin instead of a 2024 build
+- Accurate picture size: the output now matches the horizontal timing of real GameCube/Wii hardware, so the image is no longer too wide and cropped by overscan
+- Simplified settings on a dedicated page (Settings > Groovy MiSTer). Compression and scaling are always on; you only choose a display type and enter the MiSTer's IP address
+- Removed Delta Frames (sending only the changed parts of each frame). It could leave visual artifacts on screen and offers no benefit on a wired gigabit connection
+- Automatic reconnection if the Groovy core is started late or restarted
+- On-screen status messages (for example when the MiSTer cannot be reached or audio is disabled in the Groovy core)
+- Per-game 240p setting, enabled by default for several retro collections (Sonic, Mega Man, Midway, Namco Museum)
+- PAL games run at the correct speed in 240p mode (output as 288p at 50 Hz)
+- NetPlay compatibility with official Dolphin, as long as both players use the version shown in Help > About
+- Various smaller fixes, including audio crackling, a possible crash with PAL games, and controller input handling
 
 ---
 
