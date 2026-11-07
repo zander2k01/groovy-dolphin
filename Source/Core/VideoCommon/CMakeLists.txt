@@ -114,6 +114,13 @@ add_library(videocommon
   LightingShaderGen.cpp
   LightingShaderGen.h
   LookUpTables.h
+  Mister.cpp
+  Mister.h
+  mister/groovymister.cpp
+  mister/groovymister.h
+  mister/groovymister_wrapper.cpp
+  mister/groovymister_wrapper.h
+  mister/rio.h
   NativeVertexFormat.h
   NetPlayChatUI.cpp
   NetPlayChatUI.h
@@ -246,7 +253,15 @@ PRIVATE
   implot
   glslang::SPIRV
   tinygltf
+  LZ4::LZ4
 )
+
+if(WIN32)
+  # Groovy MiSTer: the groovymister library is compiled in (not loaded as a DLL)
+  # and uses Winsock + Registered I/O for networking.
+  target_compile_definitions(videocommon PUBLIC GROOVYMISTER_WIN32_STATIC)
+  target_link_libraries(videocommon PRIVATE ws2_32 mswsock)
+endif()
 
 if(_M_X86_64)
   target_sources(videocommon PRIVATE

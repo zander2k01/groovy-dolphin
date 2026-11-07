@@ -62,6 +62,8 @@ add_library(inputcommon
   ControllerInterface/InputBackend.h
   ControllerInterface/MappingCommon.cpp
   ControllerInterface/MappingCommon.h
+  ControllerInterface/MisterInput/MisterInput.cpp
+  ControllerInterface/MisterInput/MisterInput.h
   ControllerInterface/Wiimote/WiimoteController.cpp
   ControllerInterface/Wiimote/WiimoteController.h
   ControlReference/ControlReference.cpp
@@ -86,6 +88,11 @@ PRIVATE
   sfml-network
   spng::spng
 )
+
+if(WIN32)
+  # Groovy MiSTer: MisterInput uses the compiled-in groovymister library.
+  target_compile_definitions(inputcommon PRIVATE GROOVYMISTER_WIN32_STATIC)
+endif()
 
 if(WIN32)
   target_sources(inputcommon PRIVATE

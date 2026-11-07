@@ -89,7 +89,6 @@ void ControllerInterface::Initialize(const WindowSystemInfo& wsi)
   m_input_backends.emplace_back(ciface::SteamDeck::CreateInputBackend(this));
 #endif
 #ifdef CIFACE_USE_MISTER
-  //m_input_backends.emplace_back(ciface::MisterInput::CreateInputBackend(this));
   ciface::MisterInput::Init();
 #endif
 
@@ -165,7 +164,7 @@ void ControllerInterface::RefreshDevices(RefreshReason reason)
   // device.
 
 #ifdef CIFACE_USE_MISTER
-  ciface::MisterInput::PopulateDevices(); 
+  ciface::MisterInput::PopulateDevices();
 #endif
 
   for (auto& backend : m_input_backends)
@@ -208,7 +207,7 @@ void ControllerInterface::Shutdown()
 
 #ifdef CIFACE_USE_MISTER
   ciface::MisterInput::DeInit();
-#endif  
+#endif
 
   // Empty the container of input backends to deconstruct and deinitialize them.
   m_input_backends.clear();

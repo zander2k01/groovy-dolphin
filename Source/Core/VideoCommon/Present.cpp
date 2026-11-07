@@ -970,7 +970,7 @@ void Presenter::Present(PresentInfo* present_info)
 
     // GroovyMister
     if (Config::Get(Config::GFX_GROOVY_ENABLE) && g_mister.isConnected())
-    {      
+    {
       // Check resolution
       {
         auto mode = Config::Get(Config::GFX_GROOVY_VIDEO_MODE);
@@ -994,7 +994,7 @@ void Presenter::Present(PresentInfo* present_info)
         {
           NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer video_mode {} switchres {}x{}@{}", video_mode, res_w, res_h, refresh);
           g_mister.Switchres(video_mode, res_w, res_h, refresh, Config::Get(Config::GFX_GROOVY_PROG_FB));
-        }       
+        }
 
         // Scale or render fb as is
         bool do_scaling = false;
@@ -1069,16 +1069,16 @@ void Presenter::Present(PresentInfo* present_info)
           u8* bytes = reinterpret_cast<u8*>(output->GetMappedPointer());
           int w = output->GetConfig().width;
           int h = output->GetConfig().height;
-          int stride = static_cast<int>(output->GetMappedStride());    
+          int stride = static_cast<int>(output->GetMappedStride());
           // Dump to MiSTer progressive buffer
-          char* tmp_buffer = g_mister.m_texture_bytes;          
+          char* tmp_buffer = g_mister.m_texture_bytes;
           if (!Config::Get(Config::GFX_GROOVY_LZ4_DELTA) && !g_mister.isInterlaced())
             tmp_buffer = g_mister.getPBufferBlit();
-         
+
          // int matchDelta = 0;
          // uint8_t* tmp_buffer_delta = (uint8_t*)g_mister.getPBufferBlitDelta();
           int c = 0;
-          int offset_xres = g_mister.getRealWidth() - w;                             
+          int offset_xres = g_mister.getRealWidth() - w;
           for (int y = 0; y < h; y++)
           {
             const u8* pos = bytes + y * stride;
@@ -1135,16 +1135,16 @@ void Presenter::Present(PresentInfo* present_info)
               tmp_buffer[c + 1] = 0;
               tmp_buffer[c + 2] = 0;
               c += 3;
-            }            
+            }
             if (mode == Config::GroovyVideoMode::GV_15KHZ_240P && h > 240)
-              y++;              
+              y++;
           }
          // g_mister.setMatch(matchDelta);
-          output->Unmap();          
+          output->Unmap();
         }
-      }      
+      }
     }
-                                    
+
     RenderXFBToScreen(render_target_rc, m_xfb_entry->texture.get(), render_source_rc);
   }
 

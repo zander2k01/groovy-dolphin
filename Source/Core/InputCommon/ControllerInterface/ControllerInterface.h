@@ -39,6 +39,7 @@
 #define CIFACE_USE_STEAMDECK
 #endif
 
+// Groovy MiSTer: controller input sent back from the MiSTer.
 #define CIFACE_USE_MISTER
 
 namespace ciface
@@ -121,6 +122,8 @@ public:
 
   static void SetCurrentInputChannel(ciface::InputChannel);
   static ciface::InputChannel GetCurrentInputChannel();
+
+  WindowSystemInfo GetWindowSystemInfo() const;
 
 private:
   void ClearDevices();

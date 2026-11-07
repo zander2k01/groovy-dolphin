@@ -1,18 +1,21 @@
 // Copyright 2010 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include "InputCommon/ControllerInterface/MisterInput/MisterInput.h"
+
+#include <array>
+
+#include "Common/CommonTypes.h"
 #include "Common/Config/Config.h"
 #include "Core/Config/GraphicsSettings.h"
-#include <VideoCommon/mister/groovymister_wrapper.h>
-
-#include "InputCommon/ControllerInterface/MisterInput/MisterInput.h"
+#include "VideoCommon/mister/groovymister_wrapper.h"
 
 namespace ciface::MisterInput
 {
 struct ButtonDef
 {
   const char* name;
-  WORD bitmask;
+  u16 bitmask;
 };
 static constexpr std::array<ButtonDef, 14> named_buttons{{
     {"Pad N", 0},
@@ -79,17 +82,14 @@ public:
   }
 
 private:
+  const uint8_t m_index;
   const uint8_t m_map;
-  const uint8_t m_index;  
 };
 
 class Axis final : public Core::Device::Input
 {
 public:
-  Axis(uint8_t index, const SHORT& axis, SHORT range, uint8_t map)
-      : m_axis(axis), m_range(range), m_index(index), m_map(map)
-  {
-  }
+  Axis(uint8_t index, s16 range, uint8_t map) : m_range(range), m_index(index), m_map(map) {}
   std::string GetName() const override
   {
     return std::string(named_axes[m_index]) + (m_range < 0 ? '-' : '+');
@@ -98,41 +98,42 @@ public:
   {
     gmw_fpgaJoyInputs joyInputs;
     gmw_getJoyInputs(&joyInputs);
-    int value = 0;
-    
-    if (m_index == 0)    
-       value = (m_map == 0) ? ((joyInputs.joy1LXAnalog << 8) + joyInputs.joy1LXAnalog) :
-                              ((joyInputs.joy2LXAnalog << 8) + joyInputs.joy2LXAnalog);
-     
-    if (m_index == 1)
-      value = (m_map == 0) ? ((joyInputs.joy1LYAnalog << 8) + joyInputs.joy1LYAnalog) :
-                             ((joyInputs.joy2LYAnalog << 8) + joyInputs.joy2LYAnalog);
 
-    if (m_index == 2)
-      value = (m_map == 0) ? ((joyInputs.joy1RXAnalog << 8) + joyInputs.joy1RXAnalog) :
-                             ((joyInputs.joy2RXAnalog << 8) + joyInputs.joy2RXAnalog);
+    // The MiSTer sends each analog axis as a signed 8-bit value. `char` is unsigned on some
+    // platforms (e.g. ARM), so cast explicitly before widening it to the 16-bit range.
+    s8 raw = 0;
+    switch (m_index)
+    {
+    case 0:
+      raw = static_cast<s8>(m_map == 0 ? joyInputs.joy1LXAnalog : joyInputs.joy2LXAnalog);
+      break;
+    case 1:
+      raw = static_cast<s8>(m_map == 0 ? joyInputs.joy1LYAnalog : joyInputs.joy2LYAnalog);
+      break;
+    case 2:
+      raw = static_cast<s8>(m_map == 0 ? joyInputs.joy1RXAnalog : joyInputs.joy2RXAnalog);
+      break;
+    case 3:
+      raw = static_cast<s8>(m_map == 0 ? joyInputs.joy1RYAnalog : joyInputs.joy2RYAnalog);
+      break;
+    default:
+      break;
+    }
 
-    if (m_index == 3)
-      value = (m_map == 0) ? ((joyInputs.joy1RYAnalog << 8) + joyInputs.joy1RYAnalog) :
-                             ((joyInputs.joy2RYAnalog << 8) + joyInputs.joy2RYAnalog);
-
+    int value = (raw << 8) + raw;
     if (value < -32768)
       value = -32768;
     if (value > 32767)
       value = 32767;
 
-    return ControlState(value) / m_range;  
+    return ControlState(value) / m_range;
   }
 
 private:
-  const SHORT& m_axis;
-  const SHORT m_range;
+  const s16 m_range;
   const uint8_t m_index;
   const uint8_t m_map;
 };
-
-
-static bool s_have_guide_button = false;
 
 void Init()
 {
@@ -172,8 +173,8 @@ Device::Device(const uint8_t index) : m_index(index)
     //const SHORT& ax = (&m_state_in.Gamepad.sThumbLX)[i];
 
     // Each axis gets a negative and a positive input instance associated with it.
-    AddInput(new Axis(i, -32768, -32768, m_index));
-    AddInput(new Axis(i, 32767, 32767, m_index));
+    AddInput(new Axis(i, -32768, m_index));
+    AddInput(new Axis(i, 32767, m_index));
   }
   
   // Rumble motors.  

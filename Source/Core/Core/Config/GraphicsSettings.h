@@ -32,7 +32,7 @@ extern const Info<bool> GFX_GROOVY_JUMBO;
 extern const Info<bool> GFX_GROOVY_PROG_FB;
 extern const Info<bool> GFX_GROOVY_AUDIO;
 enum class GroovyVideoMode
-{  
+{
   GV_15KHZ,
   GV_15KHZ_240P,
   GV_NTSC,

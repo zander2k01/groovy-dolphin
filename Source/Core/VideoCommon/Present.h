@@ -150,7 +150,7 @@ private:
   std::unique_ptr<AbstractStagingTexture> m_mister_readback_texture;
   std::unique_ptr<AbstractTexture> m_mister_scaling_texture;
   std::unique_ptr<AbstractFramebuffer> m_mister_scaling_framebuffer;
-  
+
   // The presentation rectangle.
   // Width and height correspond to the final output resolution.
   // Offsets imply black borders (if the window aspect ratio doesn't match the game's one).
