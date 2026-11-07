@@ -181,6 +181,15 @@ void GeneralWidget::CreateWidgets()
   m_groovy_audio = new ConfigBool(tr("Send Audio"), Config::GFX_GROOVY_AUDIO, m_game_layer);
   groovy_mister_layout->addWidget(m_groovy_audio, 7, 0);
 
+  m_groovy_preview = new ConfigBool(tr("Show PC Preview Window (for streaming)"),
+                                    Config::GFX_GROOVY_PREVIEW, m_game_layer);
+  m_groovy_preview->SetDescription(
+      tr("Opens a separate \"Groovy MiSTer Preview\" window on the PC that shows the picture "
+         "being sent to the MiSTer, so it can be shared on Discord or captured by streaming "
+         "software.<br><br><dolphin_emphasis>If unsure, leave this unchecked."
+         "</dolphin_emphasis>"));
+  groovy_mister_layout->addWidget(m_groovy_preview, 8, 0, 1, 2);
+
   auto* groovy_video_groupbox = new QGroupBox(tr("TV/Monitor"));
   auto* groovy_video_vboxlayout = new QVBoxLayout;
   groovy_video_groupbox->setLayout(groovy_video_vboxlayout);

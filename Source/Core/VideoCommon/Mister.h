@@ -1,5 +1,8 @@
 #include <inttypes.h>
 
+#include <mutex>
+#include <vector>
+
 class MiSTer
 {
 public:
@@ -34,6 +37,13 @@ public:
   
   char m_texture_bytes[704 * 538 * 3]; // always progressive when outputs interlaced to alternate fields  
 
+  // PC preview: a copy of the last frame sent to the MiSTer (BGR, 3 bytes per pixel), so it
+  // can be shown in a window on the PC (e.g. for streaming on Discord).
+  void UpdatePreview(const char* bgr, int width, int height);
+  // Copies the preview frame into `out` if it changed since `last_frame_id`.
+  // Returns false if there is no new frame.
+  bool GetPreview(std::vector<uint8_t>* out, int* width, int* height, uint32_t* last_frame_id);
+
 private: 
   uint32_t m_frame = 0;  
   uint8_t m_frameField = 0;
@@ -50,6 +60,12 @@ private:
   uint8_t m_delta_frames = 0;
   uint8_t m_match = 0;
   bool m_error_connection = false;
+
+  std::mutex m_preview_mutex;
+  std::vector<uint8_t> m_preview;
+  int m_preview_width = 0;
+  int m_preview_height = 0;
+  uint32_t m_preview_frame_id = 0;
 };
 
 extern MiSTer g_mister;

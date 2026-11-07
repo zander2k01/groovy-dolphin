@@ -31,6 +31,7 @@ extern const Info<bool> GFX_GROOVY_LZ4_DELTA;
 extern const Info<bool> GFX_GROOVY_JUMBO;
 extern const Info<bool> GFX_GROOVY_PROG_FB;
 extern const Info<bool> GFX_GROOVY_AUDIO;
+extern const Info<bool> GFX_GROOVY_PREVIEW;
 enum class GroovyVideoMode
 {
   GV_15KHZ,

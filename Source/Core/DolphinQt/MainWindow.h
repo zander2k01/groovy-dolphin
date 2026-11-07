@@ -33,6 +33,7 @@ class DragEnterEvent;
 class FreeLookWindow;
 class GameCount;
 class GameList;
+class GroovyPreviewWindow;
 class GBATASInputWindow;
 class GCTASInputWindow;
 class HotkeyScheduler;
@@ -244,6 +245,8 @@ private:
   GameList* m_game_list;
   GameCount* m_game_count;
   RenderWidget* m_render_widget = nullptr;
+  // Groovy MiSTer: optional PC preview of the picture sent to the MiSTer.
+  GroovyPreviewWindow* m_groovy_preview = nullptr;
   bool m_rendering_to_main;
   bool m_stop_confirm_showing = false;
   bool m_stop_requested = false;

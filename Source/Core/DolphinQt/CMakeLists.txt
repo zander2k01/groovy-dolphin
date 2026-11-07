@@ -296,6 +296,8 @@ add_executable(dolphin-emu
   GCMemcardCreateNewDialog.h
   GCMemcardManager.cpp
   GCMemcardManager.h
+  GroovyPreviewWindow.cpp
+  GroovyPreviewWindow.h
   Host.cpp
   Host.h
   HotkeyScheduler.cpp

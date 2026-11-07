@@ -1140,6 +1140,15 @@ void Presenter::Present(PresentInfo* present_info)
               y++;
           }
          // g_mister.setMatch(matchDelta);
+
+          // PC preview window: share a copy of the frame exactly as it goes to the MiSTer.
+          if (Config::Get(Config::GFX_GROOVY_PREVIEW))
+          {
+            const int row_width = w + std::max(offset_xres, 0);
+            const int rows = row_width > 0 ? c / (3 * row_width) : 0;
+            g_mister.UpdatePreview(tmp_buffer, row_width, rows);
+          }
+
           output->Unmap();
         }
       }

@@ -113,6 +113,7 @@
 #include "DolphinQt/QtUtils/QueueOnObject.h"
 #include "DolphinQt/QtUtils/RunOnObject.h"
 #include "DolphinQt/QtUtils/WindowActivationEventFilter.h"
+#include "DolphinQt/GroovyPreviewWindow.h"
 #include "DolphinQt/RenderWidget.h"
 #include "DolphinQt/ResourcePackManager.h"
 #include "DolphinQt/Resources.h"
@@ -345,6 +346,7 @@ MainWindow::~MainWindow()
 #endif  // USE_RETRO_ACHIEVEMENTS
 
   delete m_render_widget;
+  delete m_groovy_preview;
   delete m_netplay_dialog;
 
   for (int i = 0; i < 4; i++)
@@ -454,6 +456,7 @@ void MainWindow::CreateComponents()
   m_game_count = new GameCount(this);
   m_game_list = new GameList(this);
   m_render_widget = new RenderWidget;
+  m_groovy_preview = new GroovyPreviewWindow;
   m_stack = new QStackedWidget(this);
 
   for (int i = 0; i < 4; i++)

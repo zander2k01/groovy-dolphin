@@ -505,3 +505,31 @@ uint8_t MiSTer::getMode(void)
 }
 
 MiSTer g_mister;
+
+void MiSTer::UpdatePreview(const char* bgr, int width, int height)
+{
+  if (!bgr || width <= 0 || height <= 0)
+    return;
+
+  std::lock_guard lock(m_preview_mutex);
+  const size_t size = static_cast<size_t>(width) * height * 3;
+  m_preview.assign(reinterpret_cast<const uint8_t*>(bgr),
+                   reinterpret_cast<const uint8_t*>(bgr) + size);
+  m_preview_width = width;
+  m_preview_height = height;
+  m_preview_frame_id++;
+}
+
+bool MiSTer::GetPreview(std::vector<uint8_t>* out, int* width, int* height,
+                        uint32_t* last_frame_id)
+{
+  std::lock_guard lock(m_preview_mutex);
+  if (m_preview.empty() || m_preview_frame_id == *last_frame_id)
+    return false;
+
+  *out = m_preview;
+  *width = m_preview_width;
+  *height = m_preview_height;
+  *last_frame_id = m_preview_frame_id;
+  return true;
+}
