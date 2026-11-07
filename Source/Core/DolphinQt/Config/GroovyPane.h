@@ -10,6 +10,9 @@ class ConfigBool;
 class ConfigChoice;
 class ConfigInteger;
 class ConfigText;
+class QGroupBox;
+
+#include "Core/Config/GraphicsSettings.h"
 
 namespace Config
 {
@@ -28,13 +31,30 @@ public:
 private:
   void CreateWidgets();
   void OnEmulationStateChanged(bool running);
+  void OnDisplayChanged(int index);
+  void UpdateCustomState();
+  bool IsCustom() const;
+  void ShowValues(const Config::GroovyOutputSettings& s);
+  template <typename T>
+  void SaveSetting(const Config::Info<T>& info, const T& value);
 
   Config::Layer* m_game_layer;
+  bool m_running = false;
+  // Last non-Custom display type; Custom starts from its values.
+  int m_last_preset = 0;
 
   ConfigBool* m_enable;
   ConfigText* m_ip;
   ConfigChoice* m_display;
   ConfigBool* m_prefer_240p;
+  QGroupBox* m_custom_box;
+  ConfigChoice* m_video_mode;
+  ConfigBool* m_prog_fb;
+  ConfigBool* m_console_size;
+  ConfigBool* m_scale;
+  ConfigBool* m_lz4;
+  ConfigBool* m_delta;
+  ConfigBool* m_jumbo;
   ConfigBool* m_audio;
   ConfigBool* m_auto_vsync;
   ConfigInteger* m_vsync;

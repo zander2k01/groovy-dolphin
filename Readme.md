@@ -26,7 +26,7 @@ Unzip it anywhere and run Dolphin.exe. The build is portable: settings and saves
 
 1. Load **Utility > Groovy** on the MiSTer.
 2. In Dolphin go to **Settings > Groovy MiSTer**, tick **Enable MiSTer Output** and type in your MiSTer's IP.
-3. Select your **Display** type (the default, CRT TV, is correct for standard 15 kHz CRT TVs) and start a game.
+3. Select your **Display** type (the default, CRT TV, is correct for standard 15 kHz CRT TVs) and start a game. Choose **Custom** if you want to set every output option yourself.
 
 If the MiSTer is not ready yet, Dolphin retries automatically and shows the connection status in its window.
 
@@ -34,8 +34,8 @@ If the MiSTer is not ready yet, Dolphin retries automatically and shows the conn
 
 - Based on current Dolphin instead of a 2024 build
 - Accurate picture size: the output now matches the horizontal timing of real GameCube/Wii hardware, so the image is no longer too wide and cropped by overscan
-- Simplified settings on a dedicated page (Settings > Groovy MiSTer). Compression and scaling are always on; you only choose a display type and enter the MiSTer's IP address
-- Removed Delta Frames (sending only the changed parts of each frame). It could leave visual artifacts on screen and offers no benefit on a wired gigabit connection
+- Simplified settings on a dedicated page (Settings > Groovy MiSTer). In most cases you only choose a display type and enter the MiSTer's IP address. Each display type is a preset, and all of its output settings are shown underneath. Choosing **Custom** makes every output option from psakhis's build editable (video mode, progressive framebuffer, picture size, scaling, LZ4, Delta Frames and Jumbo Frames)
+- Fixed Delta Frames leaving parts of old frames on screen. Delta Frames are now off by default and available under Custom
 - Automatic reconnection if the Groovy core is started late or restarted
 - On-screen status messages (for example when the MiSTer cannot be reached or audio is disabled in the Groovy core)
 - Per-game 240p setting, enabled by default for several retro collections (Sonic, Mega Man, Midway, Namco Museum)

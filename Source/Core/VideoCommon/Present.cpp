@@ -97,13 +97,15 @@ static void TryToSnapToXFBSize(int& width, int& height, int xfb_width, int xfb_h
 // Groovy MiSTer: (re)connect using the current settings.
 static void ConnectToMiSTer()
 {
-  // LZ4-compressed frames, 48 kHz stereo audio, RGB888, standard 1500-byte packets. (Delta frames
-  // and jumbo frames were options in psakhis's build; neither is needed on a wired gigabit link,
-  // and delta frames left garbage on screen, so they're gone.)
+  // 48 kHz stereo audio, RGB888. By default LZ4-compressed frames in standard 1500-byte packets;
+  // delta frames and jumbo packets only with a Custom display.
+  const auto settings = Config::GetGroovyOutputSettings();
   const std::string ip = Config::Get(Config::GFX_GROOVY_IP);
-  NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer Init ip {}", ip);
-  g_mister.Init(ip.c_str(), 32100, 1, 48000, 2, 0, 1500);
-  g_mister.setDeltaFrames(0);
+  NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer Init ip {} lz4 {} delta {} jumbo {}", ip, settings.lz4,
+                 settings.delta, settings.jumbo);
+  const uint8_t lz4 = settings.delta ? 2 : settings.lz4 ? 1 : 0;
+  g_mister.Init(ip.c_str(), 32100, lz4, 48000, 2, 0, settings.jumbo ? 3800 : 1500);
+  g_mister.setDeltaFrames(settings.delta ? 1 : 0);
 }
 
 Presenter::Presenter()
@@ -978,14 +980,10 @@ void Presenter::Present(PresentInfo* present_info)
     {
       // Check resolution
       {
-        // The display type picks the video mode and whether to use a progressive framebuffer.
-        const auto display = Config::Get(Config::GFX_GROOVY_DISPLAY);
-        auto mode = display == Config::GroovyDisplay::CrtTv240p ?
-                        Config::GroovyVideoMode::GV_15KHZ_240P :
-                    display == Config::GroovyDisplay::VgaMonitor ?
-                        Config::GroovyVideoMode::GV_VGA :
-                        Config::GroovyVideoMode::GV_15KHZ;
-        const bool progressive_fb = display == Config::GroovyDisplay::Hdmi;
+        // The display type (or the Custom settings) picks the video mode and framebuffer.
+        const auto settings = Config::GetGroovyOutputSettings();
+        auto mode = settings.mode;
+        const bool progressive_fb = settings.progressive_fb;
         // The game's own frame size. m_xfb_rect is multiplied by the internal resolution, which
         // made the mode selection (e.g. 448 vs 480 lines) pick the wrong mode above 1x.
         u32 res_w = m_last_xfb_width;
@@ -1004,7 +1002,7 @@ void Presenter::Present(PresentInfo* present_info)
         // Real console picture size: give the MiSTer the game's own horizontal timing.
         const auto h_timing = video_interface.GetHorizontalTiming();
         const bool timing_changed = g_mister.SetConsoleTiming(
-            true, h_timing.half_line_width,
+            settings.console_size, h_timing.half_line_width,
             h_timing.sync_width, h_timing.blank_end, h_timing.blank_start);
         uint8_t video_mode = mode == Config::GroovyVideoMode::GV_15KHZ      ? 0 :
                              mode == Config::GroovyVideoMode::GV_15KHZ_240P ? 1 :
@@ -1035,9 +1033,12 @@ void Presenter::Present(PresentInfo* present_info)
           u32 real_height =
               g_mister.getMode() == 1 ? g_mister.getRealHeight() * 2 : g_mister.getRealHeight();
 
-          // Scale to the MiSTer's resolution whenever the sizes differ (e.g. internal resolution
-          // above 1x, which also smooths edges).
-          if ((width != g_mister.getRealWidth() || height != real_height) &&
+          // Scale to the MiSTer's resolution whenever the sizes differ. With "Scale to fit" turned
+          // off (Custom only), only frames above 1x internal resolution are scaled, so the MiSTer
+          // still gets the game's resolution; others are centered or cropped as they are.
+          const bool upscaled = width != res_w || height != res_h;
+          if ((settings.scale || upscaled) &&
+              (width != g_mister.getRealWidth() || height != real_height) &&
               g_mister.getRealWidth() && g_mister.getRealHeight())
           {
             do_scaling = true;

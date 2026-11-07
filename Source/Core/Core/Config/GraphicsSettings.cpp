@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "Common/Config/Config.h"
 #include "VideoCommon/VideoConfig.h"
 
 namespace Config
@@ -17,6 +18,51 @@ const Info<bool> GFX_GROOVY_AUTO_VSYNC{{System::GFX, "Groovy", "AutoVSync"}, fal
 const Info<int> GFX_GROOVY_VSYNC{{System::GFX, "Groovy", "VSync"}, 100};
 const Info<GroovyDisplay> GFX_GROOVY_DISPLAY{{System::GFX, "Groovy", "Display"},
                                              GroovyDisplay::CrtTv};
+const Info<GroovyVideoMode> GFX_GROOVY_VIDEO_MODE{{System::GFX, "Groovy", "VideoMode"},
+                                                  GroovyVideoMode::GV_15KHZ};
+const Info<bool> GFX_GROOVY_PROG_FB{{System::GFX, "Groovy", "GroovyProgFB"}, false};
+const Info<bool> GFX_GROOVY_CONSOLE_SIZE{{System::GFX, "Groovy", "ConsolePictureSize"}, true};
+const Info<bool> GFX_GROOVY_SCALE{{System::GFX, "Groovy", "Scale"}, true};
+const Info<bool> GFX_GROOVY_LZ4{{System::GFX, "Groovy", "GroovyLZ4"}, true};
+const Info<bool> GFX_GROOVY_LZ4_DELTA{{System::GFX, "Groovy", "GroovyLZ4Delta"}, false};
+const Info<bool> GFX_GROOVY_JUMBO{{System::GFX, "Groovy", "GroovyJumbo"}, false};
+
+GroovyOutputSettings GetGroovyPreset(GroovyDisplay display)
+{
+  GroovyOutputSettings s;
+  switch (display)
+  {
+  case GroovyDisplay::CrtTv240p:
+    s.mode = GroovyVideoMode::GV_15KHZ_240P;
+    break;
+  case GroovyDisplay::VgaMonitor:
+    s.mode = GroovyVideoMode::GV_VGA;
+    break;
+  case GroovyDisplay::Hdmi:
+    s.progressive_fb = true;
+    break;
+  default:
+    break;
+  }
+  return s;
+}
+
+GroovyOutputSettings GetGroovyOutputSettings()
+{
+  const GroovyDisplay display = Get(GFX_GROOVY_DISPLAY);
+  if (display != GroovyDisplay::Custom)
+    return GetGroovyPreset(display);
+
+  GroovyOutputSettings s;
+  s.mode = Get(GFX_GROOVY_VIDEO_MODE);
+  s.progressive_fb = Get(GFX_GROOVY_PROG_FB);
+  s.console_size = Get(GFX_GROOVY_CONSOLE_SIZE);
+  s.scale = Get(GFX_GROOVY_SCALE);
+  s.lz4 = Get(GFX_GROOVY_LZ4);
+  s.delta = s.lz4 && Get(GFX_GROOVY_LZ4_DELTA);  // delta frames need LZ4
+  s.jumbo = Get(GFX_GROOVY_JUMBO);
+  return s;
+}
 const Info<std::string> GFX_GROOVY_IP{{System::GFX, "Groovy", "MisterIp"}, ""};
 const Info<bool> GFX_GROOVY_AUDIO{{System::GFX, "Groovy", "GroovyAudio"}, true};
 const Info<bool> GFX_GROOVY_PREVIEW{{System::GFX, "Groovy", "PCPreview"}, false};

@@ -28,13 +28,13 @@ extern const Info<int> GFX_GROOVY_VSYNC;
 extern const Info<bool> GFX_GROOVY_AUDIO;
 extern const Info<bool> GFX_GROOVY_PREVIEW;
 extern const Info<bool> GFX_GROOVY_PREFER_240P;
-// Video mode sent to the MiSTer (derived from GroovyDisplay).
+// Video mode sent to the MiSTer (derived from GroovyDisplay, or chosen directly with Custom).
 enum class GroovyVideoMode
 {
-  GV_15KHZ,
-  GV_15KHZ_240P,
-  GV_NTSC,
-  GV_VGA,
+  GV_15KHZ,       // 480i, 576i for PAL (240p for games with Prefer240p)
+  GV_15KHZ_240P,  // 240p, 288p for PAL
+  GV_NTSC,        // 480i, always 60 Hz (PAL games run fast)
+  GV_VGA,         // 31 kHz: 480p
 };
 
 // What the MiSTer is connected to. Picks the video mode and framebuffer type.
@@ -44,8 +44,33 @@ enum class GroovyDisplay
   CrtTv240p,    // 15 kHz: 240p for every game (288p for PAL)
   VgaMonitor,   // 31 kHz PC CRT monitor: 480p
   Hdmi,         // MiSTer's HDMI output / scaler: 15 kHz modes with a progressive framebuffer
+  Custom,       // every option below chosen by hand
 };
 extern const Info<GroovyDisplay> GFX_GROOVY_DISPLAY;
+// Only used when GFX_GROOVY_DISPLAY is Custom. Otherwise the display type decides the video mode
+// and framebuffer, and the rest use their defaults. Keys match psakhis's build.
+extern const Info<GroovyVideoMode> GFX_GROOVY_VIDEO_MODE;
+extern const Info<bool> GFX_GROOVY_PROG_FB;
+extern const Info<bool> GFX_GROOVY_CONSOLE_SIZE;
+extern const Info<bool> GFX_GROOVY_SCALE;
+extern const Info<bool> GFX_GROOVY_LZ4;
+extern const Info<bool> GFX_GROOVY_LZ4_DELTA;
+extern const Info<bool> GFX_GROOVY_JUMBO;
+
+// Everything the Groovy output uses. Each display type is a preset of these; Custom uses the
+// individual settings above.
+struct GroovyOutputSettings
+{
+  GroovyVideoMode mode = GroovyVideoMode::GV_15KHZ;
+  bool progressive_fb = false;
+  bool console_size = true;
+  bool scale = true;
+  bool lz4 = true;
+  bool delta = false;
+  bool jumbo = false;
+};
+GroovyOutputSettings GetGroovyPreset(GroovyDisplay display);
+GroovyOutputSettings GetGroovyOutputSettings();
 extern const Info<std::string> GFX_GROOVY_IP;
 
 // Graphics.Hardware
