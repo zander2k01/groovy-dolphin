@@ -44,6 +44,17 @@ MODULE_API_GMW void gmw_close(void)
 	}
 }
 
+// Closes the connection but keeps the GroovyMister object (and its buffers) alive, so other
+// threads (inputs, audio) never see it deleted. Call gmw_bindInputs + gmw_init to reconnect.
+MODULE_API_GMW void gmw_reset(void)
+{
+	if (gmw != NULL)
+	{
+		gmw->CmdClose();
+		gmw_inputsBinded = 0;
+	}
+}
+
 MODULE_API_GMW void gmw_switchres(double pClock, uint16_t hActive, uint16_t hBegin, uint16_t hEnd, uint16_t hTotal, uint16_t vActive, uint16_t vBegin, uint16_t vEnd, uint16_t vTotal, uint8_t interlace)
 {
 	if (gmw != NULL)

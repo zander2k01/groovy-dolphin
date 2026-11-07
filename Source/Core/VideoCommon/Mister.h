@@ -1,6 +1,8 @@
 #include <inttypes.h>
 
 #include <atomic>
+#include <chrono>
+#include <string>
 #include <cstddef>
 #include <mutex>
 #include <vector>
@@ -28,6 +30,8 @@ public:
   // from the emulation thread, so both lock m_audio_mutex.
   void QueueAudio(const void* samples, std::size_t num_bytes);
   void BlitAudio();
+  // True when not connected and it's time to try (re)connecting.
+  bool ShouldRetry() const;
   void doSync(void);
   void setDeltaFrames(uint8_t delta);
   void setMatch(uint32_t match);
@@ -72,7 +76,19 @@ private:
   uint16_t m_samples = 0;
   uint8_t m_delta_frames = 0;
   uint8_t m_match = 0;
-  bool m_error_connection = false;
+
+  // Lock order: m_net_mutex, then m_audio_mutex. m_net_mutex guards the connection (init, close,
+  // switchres, blit), which is used from the GPU thread, the emulation thread and the audio path.
+  std::mutex m_net_mutex;
+  void CheckConnection();
+  std::string m_host;
+  bool m_lost = false;
+  bool m_audio_warning_shown = false;
+  bool m_pal_message_shown = false;
+  uint32_t m_last_echo = 0;
+  std::chrono::steady_clock::time_point m_last_attempt{};
+  std::chrono::steady_clock::time_point m_last_echo_time{};
+  std::chrono::steady_clock::time_point m_last_blit_time{};
 
   bool m_console_timing = false;
   uint32_t m_console_hlw = 0;

@@ -94,6 +94,22 @@ static void TryToSnapToXFBSize(int& width, int& height, int xfb_width, int xfb_h
   }
 }
 
+// Groovy MiSTer: (re)connect using the current settings.
+static void ConnectToMiSTer()
+{
+  const std::string ip = Config::Get(Config::GFX_GROOVY_IP);
+  NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer Init ip {} lz4 {} delta {} jumbo {}", ip,
+                 Config::Get(Config::GFX_GROOVY_LZ4), Config::Get(Config::GFX_GROOVY_LZ4_DELTA),
+                 Config::Get(Config::GFX_GROOVY_JUMBO));
+  const int lz4 =
+      (Config::Get(Config::GFX_GROOVY_LZ4) && Config::Get(Config::GFX_GROOVY_LZ4_DELTA)) ?
+          2 :
+          Config::Get(Config::GFX_GROOVY_LZ4);
+  g_mister.Init(ip.c_str(), 32100, lz4, 48000, 2, 0,
+                Config::Get(Config::GFX_GROOVY_JUMBO) ? 3800 : 1500);
+  g_mister.setDeltaFrames(Config::Get(Config::GFX_GROOVY_LZ4_DELTA));
+}
+
 Presenter::Presenter()
 {
   auto& video_events = GetVideoEvents();
@@ -106,19 +122,7 @@ Presenter::Presenter()
 
   // Groovy MiSTer: connect to the MiSTer when emulation (and so the presenter) starts.
   if (Config::Get(Config::GFX_GROOVY_ENABLE) && !g_mister.isConnected())
-  {
-    const std::string ip = Config::Get(Config::GFX_GROOVY_IP);
-    NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer Init ip {} lz4 {} delta {} jumbo {}", ip,
-                   Config::Get(Config::GFX_GROOVY_LZ4), Config::Get(Config::GFX_GROOVY_LZ4_DELTA),
-                   Config::Get(Config::GFX_GROOVY_JUMBO));
-    const int lz4 =
-        (Config::Get(Config::GFX_GROOVY_LZ4) && Config::Get(Config::GFX_GROOVY_LZ4_DELTA)) ?
-            2 :
-            Config::Get(Config::GFX_GROOVY_LZ4);
-    g_mister.Init(ip.c_str(), 32100, lz4, 48000, 2, 0,
-                  Config::Get(Config::GFX_GROOVY_JUMBO) ? 3800 : 1500);
-    g_mister.setDeltaFrames(Config::Get(Config::GFX_GROOVY_LZ4_DELTA));
-  }
+    ConnectToMiSTer();
 }
 
 Presenter::~Presenter()
@@ -968,6 +972,11 @@ void Presenter::Present(PresentInfo* present_info)
     AdjustRectanglesToFitBounds(&render_target_rc, &render_source_rc, m_backbuffer_width,
                                 m_backbuffer_height);
 
+    // Groovy MiSTer: keep retrying if the MiSTer didn't answer yet or the connection was lost,
+    // so the Groovy core can be started (or restarted) while a game runs.
+    if (Config::Get(Config::GFX_GROOVY_ENABLE) && g_mister.ShouldRetry())
+      ConnectToMiSTer();
+
     // GroovyMister
     if (Config::Get(Config::GFX_GROOVY_ENABLE) && g_mister.isConnected())
     {
@@ -1002,7 +1011,7 @@ void Presenter::Present(PresentInfo* present_info)
           g_mister.Switchres(video_mode, res_w, res_h, refresh, Config::Get(Config::GFX_GROOVY_PROG_FB));
         }
         if (!timing_changed && res_w == g_mister.getWidth() && g_mister.getRealHeight() > 0 &&
-            g_mister.getRealHeight() <= 240 && res_h > g_mister.getRealHeight() && video_mode == 1)
+            g_mister.getRealHeight() <= 288 && res_h > g_mister.getRealHeight() && video_mode == 1)
         {
         }  // 240p forced
         else if (timing_changed || res_w != g_mister.getWidth() || res_h != g_mister.getHeight() || (refresh < 55 && !g_mister.isPAL()) || (refresh > 55 && g_mister.isPAL()))
@@ -1167,7 +1176,9 @@ void Presenter::Present(PresentInfo* present_info)
               tmp_buffer[c + 2] = 0;
               c += 3;
             }
-            if (mode == Config::GroovyVideoMode::GV_15KHZ_240P && h > 240)
+            // 240p/288p from a full-height frame: send every other line.
+            if (mode == Config::GroovyVideoMode::GV_15KHZ_240P &&
+                h > static_cast<int>(g_mister.getRealHeight()))
               y++;
           }
          // g_mister.setMatch(matchDelta);

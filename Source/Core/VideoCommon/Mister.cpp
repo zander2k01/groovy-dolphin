@@ -11,10 +11,27 @@
 #include <mutex>
 #include <Common/CommonTypes.h>
 
-MiSTer::MiSTer()
+#include <fmt/format.h>
+
+#include "Common/Config/Config.h"
+#include "Core/Config/GraphicsSettings.h"
+#include "VideoCommon/OnScreenDisplay.h"
+
+namespace
 {
-  m_error_connection = false;
+// How long without any answer from the MiSTer before the connection counts as lost.
+constexpr auto LOST_TIMEOUT = std::chrono::seconds(3);
+// How often to try (re)connecting while the MiSTer doesn't answer.
+constexpr auto RETRY_INTERVAL = std::chrono::seconds(2);
+
+void ShowMessage(std::string message, u32 ms, u32 color)
+{
+  NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer: {}", message);
+  OSD::AddMessage(fmt::format("Groovy MiSTer: {}", message), ms, color);
 }
+}  // namespace
+
+MiSTer::MiSTer() = default;
 
 MiSTer::~MiSTer()
 {
@@ -38,47 +55,80 @@ char* MiSTer::getPBufferAudio(void)
 
 void MiSTer::Close(void)
 {
-  // Don't free the buffers while the audio thread may be queueing into them.
+  // Don't free the connection while the emulation or audio thread is using it.
+  std::lock_guard net_lock(m_net_mutex);
   std::lock_guard audio_lock(m_audio_mutex);
   if (m_connected)
     gmw_close();
   m_connected = false;
+  m_lost = false;
+  m_host.clear();
 }
 
 void MiSTer::Init(const char* mister_host, short mister_port, uint8_t lz4_frames,
                   uint32_t sound_rate, uint8_t sound_chan, uint8_t rgb_mode, uint16_t mister_mtu)
 {
-  if (m_error_connection)
-    return;
+  std::lock_guard net_lock(m_net_mutex);
+  std::lock_guard audio_lock(m_audio_mutex);
 
+  // Reconnecting: close the old connection but keep the library object alive, since the input
+  // thread may be polling it. Only close when it's open (it closes itself after a failed init).
   if (m_connected)
-    gmw_close();
+    gmw_reset();
+  m_connected = false;
+
+  const bool was_lost = m_lost;
+  m_host = mister_host;
+  m_last_attempt = std::chrono::steady_clock::now();
 
   gmw_bindInputs(mister_host);
   if (gmw_init(mister_host, lz4_frames, sound_rate, sound_chan, rgb_mode, mister_mtu) < 0)
   {
-    NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer init failed");  
-    m_connected = false;
-    m_error_connection = true;
+    // No answer. Dolphin retries every few seconds (see ShouldRetry), so it's fine if the Groovy
+    // core is started after the game.
+    // Shown on every attempt, slightly longer than the retry interval, so it stays up while
+    // retrying and disappears once connected.
+    ShowMessage(fmt::format("no answer from {}. Is the Groovy core running on the MiSTer? "
+                            "Retrying...",
+                            mister_host),
+                2500, OSD::Color::RED);
   }
   else
+  {
     m_connected = true;
-  
-   m_width_core = 0;
-   m_height_core = 0;
-   m_real_width = 0;
-   m_real_height = 0;
-   m_interlaced = 0;
-   m_buffer_prog = 1;
-   m_frame = 0;     
-   m_pal = false;
-   m_samples = 0;
-   m_mode = 9;
-   m_match = 0;
+    m_lost = false;
+    m_audio_warning_shown = false;
+    m_pal_message_shown = false;
+    ShowMessage(fmt::format("{} {}", was_lost ? "reconnected to" : "connected to", mister_host),
+                OSD::Duration::NORMAL, OSD::Color::GREEN);
+  }
+
+  m_width_core = 0;
+  m_height_core = 0;
+  m_real_width = 0;
+  m_real_height = 0;
+  m_interlaced = 0;
+  m_buffer_prog = 1;
+  m_frame = 0;
+  m_pal = false;
+  m_samples = 0;
+  m_mode = 9;
+  m_match = 0;
+  m_last_echo = 0;
+  m_last_echo_time = m_last_blit_time = std::chrono::steady_clock::now();
+}
+
+bool MiSTer::ShouldRetry() const
+{
+  return !m_connected && std::chrono::steady_clock::now() - m_last_attempt >= RETRY_INTERVAL;
 }
 
 void MiSTer::Switchres(int video_mode, int w, int h, double freq, bool progressive_fb)
 {
+  std::lock_guard net_lock(m_net_mutex);
+  if (!m_connected)
+    return;
+
   double px = 12.146841;
   uint16_t udp_hactive = 640;
   uint16_t udp_hbegin = 658;
@@ -92,7 +142,9 @@ void MiSTer::Switchres(int video_mode, int w, int h, double freq, bool progressi
   m_pal = (freq > 55) ? false : true; 
   m_mode = video_mode;
 
-  if (freq > 55 || video_mode == 1 || video_mode == 2)  // 15khz/ntsc/vga
+  // 60 Hz games, or "NTSC Only" (which shows 50 Hz games at 60 Hz). 240p used to be in this list
+  // too, which played 50 Hz games 20% too fast; they now get 288p at 50 Hz (below).
+  if (freq > 55 || video_mode == 2)  // 15khz/ntsc/vga
   {
     if (w == 256)
     {
@@ -327,6 +379,15 @@ void MiSTer::Switchres(int video_mode, int w, int h, double freq, bool progressi
       udp_vbegin = 581;
       udp_vend = 586;
     }
+
+    if (video_mode == 1)  // PAL equivalent of 240p: 288p at 50 Hz
+    {
+      udp_vactive = 288;
+      udp_vbegin = 290;
+      udp_vend = 293;
+      udp_vtotal = 312;
+      udp_interlace = 0;
+    }
   }
 
   // Real console picture size (fixes overscan). The timings above stretch every width across the
@@ -375,7 +436,25 @@ void MiSTer::Switchres(int video_mode, int w, int h, double freq, bool progressi
   m_real_height = udp_vactive;
   m_buffer_prog = (m_interlaced && !progressive_fb) ? 0 : 1;
 
-  NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer switchres applied {}x{}", udp_hactive, udp_vactive);                 
+  NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer switchres applied {}x{}", udp_hactive, udp_vactive);
+
+  // Tell the user once per connection when a game runs at 50 Hz, since many NTSC TVs can't show it.
+  if (freq <= 55 && !m_pal_message_shown)
+  {
+    if (video_mode == 2)
+    {
+      ShowMessage("this game runs at 50 Hz (PAL). \"NTSC Only\" shows it at 60 Hz, so it plays "
+                  "about 20% too fast. Use Auto NTSC/PAL, or the game's 60 Hz option if it has one.",
+                  OSD::Duration::VERY_LONG, OSD::Color::YELLOW);
+    }
+    else if (video_mode != 3)
+    {
+      ShowMessage("this game runs at 50 Hz (PAL), so the MiSTer outputs 50 Hz. If your TV can't "
+                  "show it, use the game's 60 Hz option if it has one.",
+                  OSD::Duration::VERY_LONG, OSD::Color::YELLOW);
+    }
+    m_pal_message_shown = true;
+  }                 
 
   gmw_switchres(px, udp_hactive, udp_hbegin, udp_hend, udp_htotal, udp_vactive, udp_vbegin,
                 udp_vend, udp_vtotal, (progressive_fb && udp_interlace) ? 2 : udp_interlace);
@@ -384,7 +463,8 @@ void MiSTer::Switchres(int video_mode, int w, int h, double freq, bool progressi
 
 void MiSTer::Blit(uint16_t vsync, uint8_t field)
 {
-  if (m_real_width && m_real_height)
+  std::lock_guard net_lock(m_net_mutex);
+  if (m_connected && m_real_width && m_real_height)
   {
     gmw_fpgaStatus status;
     gmw_getStatus(&status);
@@ -443,6 +523,44 @@ void MiSTer::Blit(uint16_t vsync, uint8_t field)
     }
     gmw_blit(m_frame, field, vsync, 15000, matchDelta);
     gmw_waitSync();
+    CheckConnection();
+  }
+}
+
+void MiSTer::CheckConnection()
+{
+  // Called after every blit, with m_net_mutex held. The MiSTer answers each blit, which updates
+  // frameEcho; if that stops for a few seconds, the MiSTer is gone (core closed, cable, reboot).
+  const auto now = std::chrono::steady_clock::now();
+  gmw_fpgaStatus status;
+  gmw_getStatus(&status);
+
+  // Emulation was paused or loading: don't count that time as silence.
+  if (now - m_last_blit_time > std::chrono::seconds(1))
+    m_last_echo_time = now;
+  m_last_blit_time = now;
+
+  if (status.frameEcho != m_last_echo)
+  {
+    m_last_echo = status.frameEcho;
+    m_last_echo_time = now;
+
+    if (!m_audio_warning_shown && !status.audio && Config::Get(Config::GFX_GROOVY_AUDIO))
+    {
+      ShowMessage("audio is off in the Groovy core's menu on the MiSTer (Audio > Audio: On)",
+                  OSD::Duration::VERY_LONG, OSD::Color::YELLOW);
+      m_audio_warning_shown = true;
+    }
+  }
+  else if (now - m_last_echo_time > LOST_TIMEOUT)
+  {
+    ShowMessage("lost connection to the MiSTer, reconnecting...", OSD::Duration::VERY_LONG,
+                OSD::Color::RED);
+    gmw_reset();
+    m_connected = false;
+    m_lost = true;
+    // Retry right away on the next frame.
+    m_last_attempt = now - RETRY_INTERVAL;
   }
 }
 
@@ -485,6 +603,7 @@ void MiSTer::QueueAudio(const void* samples, std::size_t num_bytes)
 
 void MiSTer::BlitAudio()
 {
+  std::lock_guard net_lock(m_net_mutex);
   std::lock_guard lock(m_audio_mutex);
   if (m_connected && m_real_width && m_real_height && m_samples)
     gmw_audio(m_samples);

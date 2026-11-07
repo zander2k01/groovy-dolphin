@@ -144,6 +144,7 @@ enum RGBModeCode { //gmw_init rgbMode
 MODULE_API_GMW int gmw_init(const char* misterHost, uint8_t lz4Frames, uint32_t soundRate, uint8_t soundChan, uint8_t rgbMode, uint16_t mtu);
 // Close stream
 MODULE_API_GMW void gmw_close(void);
+MODULE_API_GMW void gmw_reset(void);
 // Change resolution (check https://github.com/antonioginer/switchres) for modeline generation (interlace=2 for progressive framebuffer)
 MODULE_API_GMW void gmw_switchres(double pClock, uint16_t hActive, uint16_t hBegin, uint16_t hEnd, uint16_t hTotal, uint16_t vActive, uint16_t vBegin, uint16_t vEnd, uint16_t vTotal, uint8_t interlace);
 // This buffer are registered and aligned for sending rgb. Populate it before gmw_blit
