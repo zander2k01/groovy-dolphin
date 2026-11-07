@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <span>
 
@@ -191,9 +192,15 @@ std::size_t Mixer::Mix(s16* samples, std::size_t num_samples)
   if (g_mister.isConnected() && Config::Get(Config::GFX_GROOVY_AUDIO))
   {
     char* tmp_buffer = g_mister.getPBufferAudio();
-    const uint16_t num_channels = 2;  // hardcoded...
-    memcpy(tmp_buffer + g_mister.getAudioSamples(), samples, num_samples * num_channels * 2);
-    g_mister.setAudioSamples(num_samples * num_channels * 2);
+    const std::size_t num_channels = 2;  // hardcoded...
+    const std::size_t num_bytes = num_samples * num_channels * sizeof(s16);
+    const std::size_t pending = g_mister.getAudioSamples();
+    // The pending byte count is 16-bit. If sending stalls, drop audio instead of wrapping.
+    if (pending + num_bytes <= UINT16_MAX)
+    {
+      memcpy(tmp_buffer + pending, samples, num_bytes);
+      g_mister.setAudioSamples(static_cast<uint16_t>(num_bytes));
+    }
     //Don't blit audio here because another thread is sending frame (VideoInterface.cpp), so we can't mix udp packets
   }
 
