@@ -263,6 +263,19 @@ if(WIN32)
   target_link_libraries(videocommon PRIVATE ws2_32 mswsock)
 endif()
 
+if(MSVC)
+  # Groovy MiSTer: the groovymister library is third-party code (like Externals), so don't
+  # treat its warnings as errors. It also uses inet_addr, which Winsock marks deprecated.
+  set_source_files_properties(
+    Mister.cpp
+    mister/groovymister.cpp
+    mister/groovymister_wrapper.cpp
+    PROPERTIES
+      COMPILE_OPTIONS "/WX-"
+      COMPILE_DEFINITIONS "_WINSOCK_DEPRECATED_NO_WARNINGS"
+  )
+endif()
+
 if(_M_X86_64)
   target_sources(videocommon PRIVATE
     TextureDecoder_x64.cpp

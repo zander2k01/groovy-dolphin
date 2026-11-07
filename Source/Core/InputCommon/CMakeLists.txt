@@ -94,6 +94,12 @@ if(WIN32)
   target_compile_definitions(inputcommon PRIVATE GROOVYMISTER_WIN32_STATIC)
 endif()
 
+if(MSVC)
+  # Groovy MiSTer: don't treat warnings in the MiSTer input glue code as errors.
+  set_source_files_properties(ControllerInterface/MisterInput/MisterInput.cpp
+                              PROPERTIES COMPILE_OPTIONS "/WX-")
+endif()
+
 if(WIN32)
   target_sources(inputcommon PRIVATE
     ControllerInterface/DInput/DInput.cpp

@@ -1,0 +1,97 @@
+# Builds Groovy Dolphin for Windows x64 and uploads it as a downloadable zip.
+#
+# To download a build: open the "Actions" tab on GitHub, click the newest
+# "Windows build" run, and download "groovy-dolphin-windows-x64" at the bottom.
+
+name: Windows build
+
+on:
+  push:
+    branches: [port-to-latest]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Current Dolphin requires Visual Studio 2026.
+    runs-on: windows-2025-vs2026
+    timeout-minutes: 240
+
+    steps:
+      - name: Check out code and bundled libraries
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake --preset visualstudio-release-x64
+          -DENABLE_AUTOUPDATE=OFF
+          -DENABLE_ANALYTICS=OFF
+          -DENABLE_TESTS=OFF
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build --preset visualstudio-build-release-x64 --target dolphin-emu -- /m /v:minimal 2>&1 | Tee-Object -FilePath build.log
+          $code = $LASTEXITCODE
+          if ($code -ne 0) {
+            # Surface compiler/linker errors as annotations so they show up on the commit.
+            Select-String -Path build.log -Pattern ': (fatal )?error [A-Z]+[0-9]+' |
+              Select-Object -First 40 |
+              ForEach-Object { Write-Output ("::error::" + $_.Line.Trim()) }
+            exit $code
+          }
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $bin = "build/release/x64/Binaries"
+          # The build links Sys, COPYING, Licenses and qt.conf instead of copying them.
+          # Replace the links with real copies so the zip is self-contained.
+          $links = @{
+            "Sys"      = "Data/Sys"
+            "COPYING"  = "COPYING"
+            "Licenses" = "LICENSES"
+            "qt.conf"  = "Source/Core/DolphinQt/qt.conf.win"
+          }
+          foreach ($name in $links.Keys) {
+            $path = Join-Path $bin $name
+            if (Test-Path $path) {
+              $item = Get-Item $path -Force
+              if ($item.LinkType) { Remove-Item $path -Force -Recurse }
+            }
+            if (-not (Test-Path $path)) {
+              Copy-Item $links[$name] $path -Recurse
+            }
+          }
+          # Portable mode: settings and saves stay inside this folder, separate from
+          # any regular Dolphin install on the same PC.
+          New-Item -ItemType File -Path (Join-Path $bin "portable.txt") -Force | Out-Null
+          @"
+          Groovy Dolphin (port-to-latest)
+          Commit: ${{ github.sha }}
+
+          Dolphin with Groovy MiSTer output (video, audio, controller input).
+          Original Groovy work by Sergi Clara (psakhis) and Martin Dahl (m-dahl).
+
+          This folder is portable: settings and saves are stored in the "User" folder here.
+          Groovy settings: Graphics > General > Groovy MiSTer.
+          "@ | Set-Content -Path (Join-Path $bin "README-GROOVY.txt")
+          Get-ChildItem $bin | Format-Table Name, Length
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: groovy-dolphin-windows-x64
+          path: build/release/x64/Binaries/
+          if-no-files-found: error
+          retention-days: 30
