@@ -1,8 +1,10 @@
 # Groovy Dolphin (updated)
 
-This is Groovy Dolphin moved over to current Dolphin. It sends GameCube and Wii games from your PC to a MiSTer running the [Groovy core](https://github.com/psakhis/Groovy_MiSTer), so you can play them on a real CRT. Video, audio and controllers plugged into the MiSTer all go over the network cable.
+Groovy Dolphin lets you play GameCube and Wii games from your PC on a real CRT. Dolphin sends the picture and sound over a network cable to a MiSTer running the [Groovy core](https://github.com/psakhis/Groovy_MiSTer), and the MiSTer outputs them to your TV. Controllers plugged into the MiSTer work too.
 
-The Groovy side of this is psakhis's work, built on Martin Dahl's ([m-dahl](https://github.com/m-dahl/groovy-dolphin)) original Groovy Dolphin. psakhis passed away in 2024 and his Dolphin version was stuck on a 2024 build, so I wanted to keep it going. Huge thanks to both of them.
+The original Groovy Dolphin stopped getting updates in 2024, so it's stuck on a Dolphin version from back then. **This is that same Groovy Dolphin, updated to run on the current version of Dolphin**, so you get everything Dolphin has added and fixed since then. I also fixed some bugs and made it easier to set up along the way (see below).
+
+None of this would exist without psakhis, who made the Groovy core and the newest Groovy Dolphin, and Martin Dahl ([m-dahl](https://github.com/m-dahl/groovy-dolphin)), who made the original. psakhis passed away in 2024, and I wanted to keep his work going. Huge thanks to both of them.
 
 ## Download
 
