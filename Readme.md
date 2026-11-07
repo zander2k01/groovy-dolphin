@@ -1,3 +1,51 @@
+# Groovy Dolphin (updated)
+
+This is Groovy Dolphin moved over to current Dolphin. It sends GameCube and Wii games from your PC to a MiSTer running the [Groovy core](https://github.com/psakhis/Groovy_MiSTer), so you can play them on a real CRT. Video, audio and controllers plugged into the MiSTer all go over the network cable.
+
+The Groovy side of this is psakhis's work, built on Martin Dahl's ([m-dahl](https://github.com/m-dahl/groovy-dolphin)) original Groovy Dolphin. psakhis passed away in 2024 and his Dolphin version was stuck on a 2024 build, so I wanted to keep it going. Huge thanks to both of them.
+
+## Download
+
+**[Latest Windows build](https://github.com/zander2k01/groovy-dolphin/releases/download/latest/groovy-dolphin-windows-x64.zip)**
+
+Unzip it anywhere and run Dolphin.exe. It's portable, so your settings and saves stay in that folder and won't mess with a normal Dolphin install.
+
+## What you need
+
+- A MiSTer with the Groovy core set up: `MiSTer_groovy` in the root of the SD card, the `Groovy_....rbf` file in `_Utility`, and this at the end of `MiSTer.ini`:
+  ```
+  [Groovy]
+  main=MiSTer_groovy
+  ```
+- A wired gigabit connection between the PC and the MiSTer (direct cable or a gigabit switch).
+- In the Groovy core's own menu on the MiSTer, turn **Audio** on (it's off by default). If you want to use a controller plugged into the MiSTer, also set **Server > Joysticks** to Analog.
+
+## Setup
+
+1. Load **Utility > Groovy** on the MiSTer.
+2. In Dolphin go to **Settings > Graphics**. In the Groovy MiSTer box, tick **Enable MiSTer Output** and type in your MiSTer's IP.
+3. Pick a TV mode (Auto NTSC/PAL is a good start) and start a game.
+
+If the MiSTer isn't ready yet, Dolphin keeps trying on its own and tells you what's going on in its window.
+
+## What's new compared to psakhis's last build
+
+- Based on current Dolphin instead of a 2024 one
+- The picture is the same size as on a real GameCube now, so the edges don't get cut off (the overscan problem psakhis mentioned)
+- Fixed junk staying on screen with Delta Frames on
+- Reconnects by itself if the Groovy core gets started late or restarted
+- On-screen messages for things like "can't find the MiSTer" or "audio is off in the Groovy core"
+- 240p option per game, already on for some retro collections (Sonic, Mega Man, Midway, Namco Museum)
+- PAL games play at the right speed in 240p mode (288p)
+- NetPlay works with friends on official Dolphin, as long as they use the version shown in Help > About
+- A bunch of smaller fixes (audio crackle, a possible crash with PAL games, the controller code)
+
+## Known issues
+
+I've mostly tested on my own setup (Windows, a Sony Trinitron, Pikmin 2), so other games and TVs might do weird things. If something looks off, tick **Show Sent Frame Window** in the Groovy settings. If that window looks fine but the CRT doesn't, the problem is in the sending part.
+
+---
+
 # Dolphin - A GameCube and Wii Emulator
 
 [Homepage](https://dolphin-emu.org/) | [Project Site](https://github.com/dolphin-emu/dolphin) | [Buildbot](https://dolphin.ci/) | [Forums](https://forums.dolphin-emu.org/) | [Wiki](https://wiki.dolphin-emu.org/) | [GitHub Wiki](https://github.com/dolphin-emu/dolphin/wiki) | [Issue Tracker](https://bugs.dolphin-emu.org/projects/emulator/issues) | [Coding Style](https://github.com/dolphin-emu/dolphin/blob/master/Contributing.md) | [Transifex Page](https://app.transifex.com/dolphinemu/dolphin-emu/dashboard/) | [Analytics](https://mon.dolphin-emu.org/)
