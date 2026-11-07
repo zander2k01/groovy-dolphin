@@ -6,6 +6,8 @@
 
 #include "mister/groovymister_wrapper.h"
 #include <Common/Logging/Log.h>
+#include <cstdint>
+#include <cstring>
 #include <mutex>
 #include <Common/CommonTypes.h>
 
@@ -36,6 +38,8 @@ char* MiSTer::getPBufferAudio(void)
 
 void MiSTer::Close(void)
 {
+  // Don't free the buffers while the audio thread may be queueing into them.
+  std::lock_guard audio_lock(m_audio_mutex);
   if (m_connected)
     gmw_close();
   m_connected = false;
@@ -426,19 +430,25 @@ void MiSTer::doSync(void)
   gmw_waitSync();
 }
 
-void MiSTer::setAudioSamples(uint16_t soundSize)
+void MiSTer::QueueAudio(const void* samples, std::size_t num_bytes)
 {
-  m_samples += soundSize;
-}
+  std::lock_guard lock(m_audio_mutex);
+  // The pending byte count is 16-bit. If sending stalls, drop audio instead of wrapping.
+  if (!m_connected || m_samples + num_bytes > UINT16_MAX)
+    return;
 
-uint16_t MiSTer::getAudioSamples()
-{
-  return m_samples;
+  char* buffer = getPBufferAudio();
+  if (!buffer)
+    return;
+
+  memcpy(buffer + m_samples, samples, num_bytes);
+  m_samples = static_cast<uint16_t>(m_samples + num_bytes);
 }
 
 void MiSTer::BlitAudio()
 {
-  if (m_real_width && m_real_height && m_samples)
+  std::lock_guard lock(m_audio_mutex);
+  if (m_connected && m_real_width && m_real_height && m_samples)
     gmw_audio(m_samples);
   m_samples = 0;
 }

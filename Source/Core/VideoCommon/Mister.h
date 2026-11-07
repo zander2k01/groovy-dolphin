@@ -1,5 +1,7 @@
 #include <inttypes.h>
 
+#include <atomic>
+#include <cstddef>
 #include <mutex>
 #include <vector>
 
@@ -17,13 +19,14 @@ public:
             uint8_t sound_chan, uint8_t rgb_mode, uint16_t mister_mtu);
   void Switchres(int video_mode, int w, int h, double freq, bool progressive_fb); 
   void Blit(uint16_t vsync, uint8_t field);
-  void setAudioSamples(uint16_t soundSize);
+  // Queues audio to send with the next frame. Called from the audio thread; BlitAudio is called
+  // from the emulation thread, so both lock m_audio_mutex.
+  void QueueAudio(const void* samples, std::size_t num_bytes);
   void BlitAudio();
   void doSync(void);
   void setDeltaFrames(uint8_t delta);
   void setMatch(uint32_t match);
 
-  uint16_t getAudioSamples();
   uint8_t getField(void); 
   uint16_t getWidth(void);
   uint16_t getHeight(void);
@@ -52,10 +55,11 @@ private:
   uint16_t m_real_height = 0;
   uint16_t m_width_core = 0;
   uint16_t m_height_core = 0; 
-  bool m_connected = false;
+  std::atomic<bool> m_connected = false;
   bool m_pal = false;  
   uint8_t m_interlaced = 0;
   uint8_t m_buffer_prog = 0;
+  std::mutex m_audio_mutex;
   uint16_t m_samples = 0;
   uint8_t m_delta_frames = 0;
   uint8_t m_match = 0;

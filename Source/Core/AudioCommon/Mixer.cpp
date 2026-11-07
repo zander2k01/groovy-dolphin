@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
 #include <cstring>
 #include <span>
 
@@ -188,20 +187,12 @@ std::size_t Mixer::Mix(s16* samples, std::size_t num_samples)
       m_gba_mixers[i].Mix(samples, num_samples);
   }
 
-  // Copy audio samples to groovy mister thread to be sent over network.
+  // Groovy MiSTer: queue the mixed audio; it's sent with the next frame (VideoInterface.cpp),
+  // so audio and video UDP packets aren't interleaved from two threads.
   if (g_mister.isConnected() && Config::Get(Config::GFX_GROOVY_AUDIO))
   {
-    char* tmp_buffer = g_mister.getPBufferAudio();
-    const std::size_t num_channels = 2;  // hardcoded...
-    const std::size_t num_bytes = num_samples * num_channels * sizeof(s16);
-    const std::size_t pending = g_mister.getAudioSamples();
-    // The pending byte count is 16-bit. If sending stalls, drop audio instead of wrapping.
-    if (pending + num_bytes <= UINT16_MAX)
-    {
-      memcpy(tmp_buffer + pending, samples, num_bytes);
-      g_mister.setAudioSamples(static_cast<uint16_t>(num_bytes));
-    }
-    //Don't blit audio here because another thread is sending frame (VideoInterface.cpp), so we can't mix udp packets
+    const std::size_t num_channels = 2;
+    g_mister.QueueAudio(samples, num_samples * num_channels * sizeof(s16));
   }
 
   return num_samples;
