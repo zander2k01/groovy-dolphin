@@ -488,6 +488,11 @@ u32 VideoInterfaceManager::GetTicksPerOddField() const
 }
 
 // Get the aspect ratio of VI's active area.
+VideoInterfaceManager::HorizontalTiming VideoInterfaceManager::GetHorizontalTiming() const
+{
+  return {m_h_timing_0.HLW, m_h_timing_1.HSY, m_h_timing_1.HBE640, m_h_timing_1.HBS640};
+}
+
 float VideoInterfaceManager::GetAspectRatio() const
 {
   // The picture of a PAL/NTSC TV signal is defined to have a 4:3 aspect ratio,

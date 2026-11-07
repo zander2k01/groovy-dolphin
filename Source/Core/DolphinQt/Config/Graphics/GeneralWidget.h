@@ -71,6 +71,8 @@ private:
   ConfigBool* m_groovy_prog_fb;
   ConfigBool* m_groovy_audio;
   ConfigBool* m_groovy_preview;
+  ConfigBool* m_groovy_console_size;
+  ConfigBool* m_groovy_prefer_240p;
   std::array<ConfigRadioInt*, 4> m_groovy_video_mode{};
 
   int m_previous_backend = 0;

@@ -190,6 +190,24 @@ void GeneralWidget::CreateWidgets()
          "</dolphin_emphasis>"));
   groovy_mister_layout->addWidget(m_groovy_preview, 8, 0, 1, 2);
 
+  m_groovy_console_size = new ConfigBool(tr("Real Console Picture Size (fixes overscan)"),
+                                         Config::GFX_GROOVY_CONSOLE_SIZE, m_game_layer);
+  m_groovy_console_size->SetDescription(
+      tr("Outputs the picture at the same size and position as a real GameCube or Wii, using "
+         "the video timing the game sets up. When unchecked, the picture fills the whole line "
+         "and its edges can be cut off by the TV's overscan. Applies to 15 kHz modes."
+         "<br><br><dolphin_emphasis>If unsure, leave this checked.</dolphin_emphasis>"));
+  groovy_mister_layout->addWidget(m_groovy_console_size, 9, 0, 1, 2);
+
+  m_groovy_prefer_240p = new ConfigBool(tr("Use 240p for This Game (retro/2D games)"),
+                                        Config::GFX_GROOVY_PREFER_240P, m_game_layer);
+  m_groovy_prefer_240p->SetDescription(
+      tr("Switches 15 kHz NTSC modes to 240p, like the original consoles for retro collections "
+         "and 2D games. Recommended games have this turned on automatically; turn it off in the "
+         "game's Properties if you prefer 480i. Ignored for VGA (31 kHz) and 50 Hz games."
+         "<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>"));
+  groovy_mister_layout->addWidget(m_groovy_prefer_240p, 10, 0, 1, 2);
+
   auto* groovy_video_groupbox = new QGroupBox(tr("TV/Monitor"));
   auto* groovy_video_vboxlayout = new QVBoxLayout;
   groovy_video_groupbox->setLayout(groovy_video_vboxlayout);

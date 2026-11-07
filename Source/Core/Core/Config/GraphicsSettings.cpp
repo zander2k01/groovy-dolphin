@@ -25,6 +25,8 @@ const Info<bool> GFX_GROOVY_LZ4_DELTA{{System::GFX, "Groovy", "GroovyLZ4Delta"},
 const Info<bool> GFX_GROOVY_PROG_FB{{System::GFX, "Groovy", "GroovyProgFB"}, false};
 const Info<bool> GFX_GROOVY_AUDIO{{System::GFX, "Groovy", "GroovyAudio"}, true};
 const Info<bool> GFX_GROOVY_PREVIEW{{System::GFX, "Groovy", "PCPreview"}, false};
+const Info<bool> GFX_GROOVY_CONSOLE_SIZE{{System::GFX, "Groovy", "ConsolePictureSize"}, true};
+const Info<bool> GFX_GROOVY_PREFER_240P{{System::GFX, "Groovy", "Prefer240p"}, false};
 
 // Graphics.Hardware
 

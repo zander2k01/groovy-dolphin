@@ -976,7 +976,22 @@ void Presenter::Present(PresentInfo* present_info)
         auto mode = Config::Get(Config::GFX_GROOVY_VIDEO_MODE);
         u32 res_w = m_xfb_rect.GetWidth();
         u32 res_h = m_xfb_rect.GetHeight();
-        double refresh = Core::System::GetInstance().GetVideoInterface().GetTargetRefreshRate();
+        auto& video_interface = Core::System::GetInstance().GetVideoInterface();
+        double refresh = video_interface.GetTargetRefreshRate();
+
+        // Per-game preference (shipped in GameSettings for 2D/retro games): use 240p on 15 kHz
+        // NTSC modes. Never applied to VGA (31 kHz) or 50 Hz games.
+        if (Config::Get(Config::GFX_GROOVY_PREFER_240P) && refresh > 55 &&
+            (mode == Config::GroovyVideoMode::GV_15KHZ || mode == Config::GroovyVideoMode::GV_NTSC))
+        {
+          mode = Config::GroovyVideoMode::GV_15KHZ_240P;
+        }
+
+        // Real console picture size: give the MiSTer the game's own horizontal timing.
+        const auto h_timing = video_interface.GetHorizontalTiming();
+        const bool timing_changed = g_mister.SetConsoleTiming(
+            Config::Get(Config::GFX_GROOVY_CONSOLE_SIZE), h_timing.half_line_width,
+            h_timing.sync_width, h_timing.blank_end, h_timing.blank_start);
         uint8_t video_mode = mode == Config::GroovyVideoMode::GV_15KHZ      ? 0 :
                              mode == Config::GroovyVideoMode::GV_15KHZ_240P ? 1 :
                              mode == Config::GroovyVideoMode::GV_NTSC       ? 2 :
@@ -986,11 +1001,11 @@ void Presenter::Present(PresentInfo* present_info)
           NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer video_mode changed from {} to {}, switchres {}x{}@{}", g_mister.getMode(), video_mode, res_w, res_h, refresh);
           g_mister.Switchres(video_mode, res_w, res_h, refresh, Config::Get(Config::GFX_GROOVY_PROG_FB));
         }
-        if (res_w == g_mister.getWidth() && g_mister.getRealHeight() > 0 &&
+        if (!timing_changed && res_w == g_mister.getWidth() && g_mister.getRealHeight() > 0 &&
             g_mister.getRealHeight() <= 240 && res_h > g_mister.getRealHeight() && video_mode == 1)
         {
         }  // 240p forced
-        else if (res_w != g_mister.getWidth() || res_h != g_mister.getHeight() || (refresh < 55 && !g_mister.isPAL()) || (refresh > 55 && g_mister.isPAL()))
+        else if (timing_changed || res_w != g_mister.getWidth() || res_h != g_mister.getHeight() || (refresh < 55 && !g_mister.isPAL()) || (refresh > 55 && g_mister.isPAL()))
         {
           NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer video_mode {} switchres {}x{}@{}", video_mode, res_w, res_h, refresh);
           g_mister.Switchres(video_mode, res_w, res_h, refresh, Config::Get(Config::GFX_GROOVY_PROG_FB));
@@ -1081,10 +1096,24 @@ void Presenter::Present(PresentInfo* present_info)
          // uint8_t* tmp_buffer_delta = (uint8_t*)g_mister.getPBufferBlitDelta();
           int c = 0;
           int offset_xres = g_mister.getRealWidth() - w;
+          // If the frame is wider than the MiSTer's line (only without "Scale Contents"), crop it
+          // evenly on both sides. Writing the full width made every row too long, which skewed the
+          // picture diagonally.
+          const int crop_left = offset_xres < 0 ? -offset_xres / 2 : 0;
+          const int copy_w = offset_xres < 0 ? w + offset_xres : w;
+          // If it's narrower, center it with black on both sides.
+          const int pad_left = offset_xres > 0 ? offset_xres / 2 : 0;
           for (int y = 0; y < h; y++)
           {
-            const u8* pos = bytes + y * stride;
-            for (int x = 0; x < w; x++)
+            const u8* pos = bytes + y * stride + crop_left * 4;
+            for (int xoff = 0; xoff < pad_left; xoff++)
+            {
+              tmp_buffer[c + 0] = 0;
+              tmp_buffer[c + 1] = 0;
+              tmp_buffer[c + 2] = 0;
+              c += 3;
+            }
+            for (int x = 0; x < copy_w; x++)
             {
               int r = pos[x * 4];
               int g = pos[x * 4 + 1];
@@ -1124,7 +1153,7 @@ void Presenter::Present(PresentInfo* present_info)
               tmp_buffer[c + 2] = r;
               c += 3;
             }
-            for (int xoff = 0; xoff < offset_xres; xoff++)
+            for (int xoff = 0; xoff < offset_xres - pad_left; xoff++)
             {
               /* if (Config::Get(Config::GFX_GROOVY_LZ4_DELTA) && !g_mister.isInterlaced())
               {
@@ -1146,7 +1175,7 @@ void Presenter::Present(PresentInfo* present_info)
           // PC preview window: share a copy of the frame exactly as it goes to the MiSTer.
           if (Config::Get(Config::GFX_GROOVY_PREVIEW))
           {
-            const int row_width = w + std::max(offset_xres, 0);
+            const int row_width = copy_w + std::max(offset_xres, 0);
             const int rows = row_width > 0 ? c / (3 * row_width) : 0;
             g_mister.UpdatePreview(tmp_buffer, row_width, rows);
           }

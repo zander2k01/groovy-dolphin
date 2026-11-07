@@ -329,6 +329,38 @@ void MiSTer::Switchres(int video_mode, int w, int h, double freq, bool progressi
     }
   }
 
+  // Real console picture size (fixes overscan). The timings above stretch every width across the
+  // whole visible line, so a 640 wide picture is ~10% wider than on a real GameCube/Wii and its
+  // edges end up in the CRT's overscan. Instead, use the timing the game programmed into the
+  // video interface: the active picture and its position within a 13.5 MHz line.
+  if (m_console_timing && video_mode != 3)
+  {
+    const int hlw = static_cast<int>(m_console_hlw);
+    const int hsy = static_cast<int>(m_console_hsy);
+    const int hbe = static_cast<int>(m_console_hbe);
+    const int hbs = static_cast<int>(m_console_hbs);
+    int active = hlw + hbs - hbe;
+    int front_porch = hlw - hbs;
+    const bool valid = hlw >= 400 && hlw <= 450 && active >= 600 && active <= 720 &&
+                       front_porch > 0 && hsy > 0 && hbe > hsy;
+    if (valid)
+    {
+      if (active & 1)
+      {
+        active--;
+        front_porch++;
+      }
+      udp_hactive = static_cast<uint16_t>(active);
+      udp_hbegin = static_cast<uint16_t>(active + front_porch);
+      udp_hend = static_cast<uint16_t>(udp_hbegin + hsy);
+      udp_htotal = static_cast<uint16_t>(2 * hlw);
+      // Pick the pixel clock that gives exactly the game's refresh rate (13.5 MHz for standard
+      // interlaced NTSC/PAL; slightly lower for 262-line 240p).
+      const double lines_per_field = udp_interlace ? udp_vtotal / 2.0 : udp_vtotal;
+      px = freq * udp_htotal * lines_per_field / 1000000.0;
+    }
+  }
+
   if (video_mode == 3)  // vga
   {
     px = px * 2;
@@ -417,6 +449,23 @@ void MiSTer::Blit(uint16_t vsync, uint8_t field)
 void MiSTer::doSync(void)
 {
   gmw_waitSync();
+}
+
+bool MiSTer::SetConsoleTiming(bool enabled, uint32_t half_line_width, uint32_t sync_width,
+                              uint32_t blank_end, uint32_t blank_start)
+{
+  if (!enabled)
+    half_line_width = sync_width = blank_end = blank_start = 0;
+
+  const bool changed = enabled != m_console_timing || half_line_width != m_console_hlw ||
+                       sync_width != m_console_hsy || blank_end != m_console_hbe ||
+                       blank_start != m_console_hbs;
+  m_console_timing = enabled;
+  m_console_hlw = half_line_width;
+  m_console_hsy = sync_width;
+  m_console_hbe = blank_end;
+  m_console_hbs = blank_start;
+  return changed;
 }
 
 void MiSTer::QueueAudio(const void* samples, std::size_t num_bytes)

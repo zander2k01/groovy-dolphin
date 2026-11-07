@@ -32,6 +32,8 @@ extern const Info<bool> GFX_GROOVY_JUMBO;
 extern const Info<bool> GFX_GROOVY_PROG_FB;
 extern const Info<bool> GFX_GROOVY_AUDIO;
 extern const Info<bool> GFX_GROOVY_PREVIEW;
+extern const Info<bool> GFX_GROOVY_CONSOLE_SIZE;
+extern const Info<bool> GFX_GROOVY_PREFER_240P;
 enum class GroovyVideoMode
 {
   GV_15KHZ,

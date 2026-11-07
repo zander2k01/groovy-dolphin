@@ -397,6 +397,17 @@ public:
   // the result by 1.33333... (the ratio between 16:9 and 4:3)
   float GetAspectRatio() const;
 
+  // Groovy MiSTer: the horizontal timing the game programmed, in samples (13.5 MHz for 15 kHz
+  // modes), so the MiSTer can output the picture at the same size as a real console.
+  struct HorizontalTiming
+  {
+    u32 half_line_width;  // HLW: a full line is 2 * HLW samples
+    u32 sync_width;       // HSY
+    u32 blank_end;        // HBE640: from sync start to the start of the active picture
+    u32 blank_start;      // HBS640: from the half line point to the end of the active picture
+  };
+  HorizontalTiming GetHorizontalTiming() const;
+
   // Create a fake VI mode for a fifolog
   void FakeVIUpdate(u32 xfb_address, u32 fb_width, u32 fb_stride, u32 fb_height);
 

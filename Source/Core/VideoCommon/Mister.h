@@ -17,7 +17,12 @@ public:
   void Close(void);
   void Init(const char* mister_host, short mister_port, uint8_t lz4_frames, uint32_t sound_rate,
             uint8_t sound_chan, uint8_t rgb_mode, uint16_t mister_mtu);
-  void Switchres(int video_mode, int w, int h, double freq, bool progressive_fb); 
+  void Switchres(int video_mode, int w, int h, double freq, bool progressive_fb);
+  // Sets the console's horizontal video timing (see VideoInterfaceManager::HorizontalTiming), used
+  // by Switchres for 15 kHz modes so the picture is the same size as on a real console.
+  // Pass enabled = false to use the original full-width timings. Returns true if it changed.
+  bool SetConsoleTiming(bool enabled, uint32_t half_line_width, uint32_t sync_width,
+                        uint32_t blank_end, uint32_t blank_start);
   void Blit(uint16_t vsync, uint8_t field);
   // Queues audio to send with the next frame. Called from the audio thread; BlitAudio is called
   // from the emulation thread, so both lock m_audio_mutex.
@@ -38,7 +43,9 @@ public:
   bool isConnected(void);
   bool isPAL(void);
   
-  char m_texture_bytes[704 * 538 * 3]; // always progressive when outputs interlaced to alternate fields  
+  // Always progressive when outputs interlaced to alternate fields. Sized like the groovymister
+  // send buffers (720x576), since PAL modes go up to 666x574 and console-size modes to 720 wide.
+  char m_texture_bytes[720 * 576 * 3];
   // Guards m_texture_bytes: written by the presenter (GPU thread), read by Blit (CPU thread).
   std::mutex m_texture_mutex;
 
@@ -66,6 +73,12 @@ private:
   uint8_t m_delta_frames = 0;
   uint8_t m_match = 0;
   bool m_error_connection = false;
+
+  bool m_console_timing = false;
+  uint32_t m_console_hlw = 0;
+  uint32_t m_console_hsy = 0;
+  uint32_t m_console_hbe = 0;
+  uint32_t m_console_hbs = 0;
 
   std::mutex m_preview_mutex;
   std::vector<uint8_t> m_preview;
