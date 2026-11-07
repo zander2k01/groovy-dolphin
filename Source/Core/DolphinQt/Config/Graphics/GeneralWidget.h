@@ -62,18 +62,13 @@ private:
   // Groovy MiSTer
   ConfigBool* m_groovy_enable;
   ConfigText* m_groovy_ip;
-  ConfigBool* m_groovy_fill_screen;
   ConfigBool* m_groovy_auto_vsync;
   ConfigInteger* m_groovy_vsync;
-  ConfigBool* m_groovy_lz4;
-  ConfigBool* m_groovy_lz4_delta;
-  ConfigBool* m_groovy_jumbo;
   ConfigBool* m_groovy_prog_fb;
   ConfigBool* m_groovy_audio;
   ConfigBool* m_groovy_preview;
-  ConfigBool* m_groovy_console_size;
   ConfigBool* m_groovy_prefer_240p;
-  std::array<ConfigRadioInt*, 4> m_groovy_video_mode{};
+  std::array<ConfigRadioInt*, 3> m_groovy_video_mode{};
 
   int m_previous_backend = 0;
   Config::Layer* m_game_layer = nullptr;

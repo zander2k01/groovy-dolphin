@@ -97,17 +97,13 @@ static void TryToSnapToXFBSize(int& width, int& height, int xfb_width, int xfb_h
 // Groovy MiSTer: (re)connect using the current settings.
 static void ConnectToMiSTer()
 {
+  // LZ4-compressed frames, 48 kHz stereo audio, RGB888, standard 1500-byte packets. (Delta frames
+  // and jumbo frames were options in psakhis's build; neither is needed on a wired gigabit link,
+  // and delta frames left garbage on screen, so they're gone.)
   const std::string ip = Config::Get(Config::GFX_GROOVY_IP);
-  NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer Init ip {} lz4 {} delta {} jumbo {}", ip,
-                 Config::Get(Config::GFX_GROOVY_LZ4), Config::Get(Config::GFX_GROOVY_LZ4_DELTA),
-                 Config::Get(Config::GFX_GROOVY_JUMBO));
-  const int lz4 =
-      (Config::Get(Config::GFX_GROOVY_LZ4) && Config::Get(Config::GFX_GROOVY_LZ4_DELTA)) ?
-          2 :
-          Config::Get(Config::GFX_GROOVY_LZ4);
-  g_mister.Init(ip.c_str(), 32100, lz4, 48000, 2, 0,
-                Config::Get(Config::GFX_GROOVY_JUMBO) ? 3800 : 1500);
-  g_mister.setDeltaFrames(Config::Get(Config::GFX_GROOVY_LZ4_DELTA));
+  NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer Init ip {}", ip);
+  g_mister.Init(ip.c_str(), 32100, 1, 48000, 2, 0, 1500);
+  g_mister.setDeltaFrames(0);
 }
 
 Presenter::Presenter()
@@ -983,6 +979,9 @@ void Presenter::Present(PresentInfo* present_info)
       // Check resolution
       {
         auto mode = Config::Get(Config::GFX_GROOVY_VIDEO_MODE);
+        // "NTSC Only" was removed from the settings; treat old saved values as Auto.
+        if (mode == Config::GroovyVideoMode::GV_NTSC)
+          mode = Config::GroovyVideoMode::GV_15KHZ;
         // The game's own frame size. m_xfb_rect is multiplied by the internal resolution, which
         // made the mode selection (e.g. 448 vs 480 lines) pick the wrong mode above 1x.
         u32 res_w = m_last_xfb_width;
@@ -993,7 +992,7 @@ void Presenter::Present(PresentInfo* present_info)
         // Per-game preference (shipped in GameSettings for 2D/retro games): use 240p on 15 kHz
         // NTSC modes. Never applied to VGA (31 kHz) or 50 Hz games.
         if (Config::Get(Config::GFX_GROOVY_PREFER_240P) && refresh > 55 &&
-            (mode == Config::GroovyVideoMode::GV_15KHZ || mode == Config::GroovyVideoMode::GV_NTSC))
+            mode == Config::GroovyVideoMode::GV_15KHZ)
         {
           mode = Config::GroovyVideoMode::GV_15KHZ_240P;
         }
@@ -1001,7 +1000,7 @@ void Presenter::Present(PresentInfo* present_info)
         // Real console picture size: give the MiSTer the game's own horizontal timing.
         const auto h_timing = video_interface.GetHorizontalTiming();
         const bool timing_changed = g_mister.SetConsoleTiming(
-            Config::Get(Config::GFX_GROOVY_CONSOLE_SIZE), h_timing.half_line_width,
+            true, h_timing.half_line_width,
             h_timing.sync_width, h_timing.blank_end, h_timing.blank_start);
         uint8_t video_mode = mode == Config::GroovyVideoMode::GV_15KHZ      ? 0 :
                              mode == Config::GroovyVideoMode::GV_15KHZ_240P ? 1 :
@@ -1032,11 +1031,9 @@ void Presenter::Present(PresentInfo* present_info)
           u32 real_height =
               g_mister.getMode() == 1 ? g_mister.getRealHeight() * 2 : g_mister.getRealHeight();
 
-          // Always scale when the internal resolution is above 1x, so the MiSTer gets the
-          // game's resolution (downsampled, which also smooths edges).
-          const bool upscaled = width != res_w || height != res_h;
-          if ((Config::Get(Config::GFX_GROOVY_SCALE) || upscaled) &&
-              (width != g_mister.getRealWidth() || height != real_height) &&
+          // Scale to the MiSTer's resolution whenever the sizes differ (e.g. internal resolution
+          // above 1x, which also smooths edges).
+          if ((width != g_mister.getRealWidth() || height != real_height) &&
               g_mister.getRealWidth() && g_mister.getRealHeight())
           {
             do_scaling = true;
@@ -1102,17 +1099,15 @@ void Presenter::Present(PresentInfo* present_info)
           // Dump to MiSTer progressive buffer. Hold the lock until the frame is complete, so
           // MiSTer::Blit (CPU thread) never reads a half-written frame.
           std::lock_guard texture_lock(g_mister.m_texture_mutex);
+          // Always write to m_texture_bytes. MiSTer::Blit copies it into the send buffer under the
+          // same lock, so a frame is never overwritten while it's being compressed and sent.
           char* tmp_buffer = g_mister.m_texture_bytes;
-          if (!Config::Get(Config::GFX_GROOVY_LZ4_DELTA) && !g_mister.isInterlaced())
-            tmp_buffer = g_mister.getPBufferBlit();
 
-         // int matchDelta = 0;
-         // uint8_t* tmp_buffer_delta = (uint8_t*)g_mister.getPBufferBlitDelta();
           int c = 0;
           int offset_xres = g_mister.getRealWidth() - w;
-          // If the frame is wider than the MiSTer's line (only without "Scale Contents"), crop it
-          // evenly on both sides. Writing the full width made every row too long, which skewed the
-          // picture diagonally.
+          // Frames are normally scaled to the MiSTer's size above. If they still don't match (e.g.
+          // for one frame right after a mode change), crop wider frames evenly on both sides:
+          // writing the full width made every row too long, which skewed the picture diagonally.
           const int crop_left = offset_xres < 0 ? -offset_xres / 2 : 0;
           const int copy_w = offset_xres < 0 ? w + offset_xres : w;
           // If it's narrower, center it with black on both sides.
@@ -1132,36 +1127,6 @@ void Presenter::Present(PresentInfo* present_info)
               int r = pos[x * 4];
               int g = pos[x * 4 + 1];
               int b = pos[x * 4 + 2];
-              /* if (Config::Get(Config::GFX_GROOVY_LZ4_DELTA) && !g_mister.isInterlaced())
-              {
-                if (b == tmp_buffer[c + 0])
-                {
-                  matchDelta++;
-                  tmp_buffer_delta[c + 0] = 0x00;
-                }
-                else
-                {
-                  tmp_buffer_delta[c + 0] = (uint8_t) b - (uint8_t)tmp_buffer[c + 0];
-                }
-                if (g == tmp_buffer[c + 1])
-                {
-                  matchDelta++;
-                  tmp_buffer_delta[c + 1] = 0x00;
-                }
-                else
-                {
-                  tmp_buffer_delta[c + 1] = (uint8_t) g - (uint8_t)tmp_buffer[c + 1];
-                }
-                if (r == tmp_buffer[c + 2])
-                {
-                  matchDelta++;
-                  tmp_buffer_delta[c + 2] = 0x00;
-                }
-                else
-                {
-                  tmp_buffer_delta[c + 2] = (uint8_t) r - (uint8_t)tmp_buffer[c + 2];
-                }
-              }*/
               tmp_buffer[c + 0] = b;
               tmp_buffer[c + 1] = g;
               tmp_buffer[c + 2] = r;
@@ -1169,13 +1134,6 @@ void Presenter::Present(PresentInfo* present_info)
             }
             for (int xoff = 0; xoff < offset_xres - pad_left; xoff++)
             {
-              /* if (Config::Get(Config::GFX_GROOVY_LZ4_DELTA) && !g_mister.isInterlaced())
-              {
-                matchDelta += 3;
-                tmp_buffer_delta[c + 0] = 0;
-                tmp_buffer_delta[c + 1] = 0;
-                tmp_buffer_delta[c + 2] = 0;
-              }*/
               tmp_buffer[c + 0] = 0;
               tmp_buffer[c + 1] = 0;
               tmp_buffer[c + 2] = 0;
@@ -1186,7 +1144,6 @@ void Presenter::Present(PresentInfo* present_info)
                 h > static_cast<int>(g_mister.getRealHeight()))
               y++;
           }
-         // g_mister.setMatch(matchDelta);
 
           // PC preview window: share a copy of the frame exactly as it goes to the MiSTer.
           if (Config::Get(Config::GFX_GROOVY_PREVIEW))

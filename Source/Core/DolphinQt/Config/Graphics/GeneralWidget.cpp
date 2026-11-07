@@ -147,39 +147,47 @@ void GeneralWidget::CreateWidgets()
 
   m_groovy_enable =
       new ConfigBool(tr("Enable MiSTer Output"), Config::GFX_GROOVY_ENABLE, m_game_layer);
+  m_groovy_enable->SetDescription(
+      tr("Sends the picture, sound and controller input to and from a MiSTer running the Groovy "
+         "core, to play on a CRT. Picture size, compression and timing are set automatically."));
   groovy_mister_layout->addWidget(m_groovy_enable, 0, 0);
 
   groovy_mister_layout->addWidget(new QLabel(tr("MiSTer IP:")), 1, 0);
   m_groovy_ip = new ConfigText(Config::GFX_GROOVY_IP, m_game_layer);
   groovy_mister_layout->addWidget(m_groovy_ip, 1, 1);
 
-  m_groovy_fill_screen =
-      new ConfigBool(tr("Scale Contents to Fill Screen"), Config::GFX_GROOVY_SCALE, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_fill_screen, 2, 0, 1, 2);
-
   m_groovy_auto_vsync = new ConfigBool(tr("Automatic V-Sync (or choose line to sync)"),
                                        Config::GFX_GROOVY_AUTO_VSYNC, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_auto_vsync, 3, 0);
+  m_groovy_auto_vsync->SetDescription(
+      tr("Latency tuning. When checked, the MiSTer picks when to show each frame by itself. "
+         "When unchecked, frames are synced to the scanline chosen on the right."
+         "<br><br><dolphin_emphasis>If unsure, leave this as it is.</dolphin_emphasis>"));
+  groovy_mister_layout->addWidget(m_groovy_auto_vsync, 2, 0);
   m_groovy_vsync = new ConfigInteger(1, 400, Config::GFX_GROOVY_VSYNC, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_vsync, 3, 1);
-
-  m_groovy_lz4 = new ConfigBool(tr("LZ4 Frames (less bandwidth, more CPU)"),
-                                Config::GFX_GROOVY_LZ4, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_lz4, 4, 0);
-  m_groovy_lz4_delta = new ConfigBool(tr("Delta Frames (only send changes, more CPU)"),
-                                      Config::GFX_GROOVY_LZ4_DELTA, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_lz4_delta, 4, 1);
-
-  m_groovy_jumbo =
-      new ConfigBool(tr("Jumbo Frames (MTU 3800)"), Config::GFX_GROOVY_JUMBO, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_jumbo, 5, 0);
+  groovy_mister_layout->addWidget(m_groovy_vsync, 2, 1);
 
   m_groovy_prog_fb = new ConfigBool(tr("Progressive Framebuffer (for scandoubler)"),
                                     Config::GFX_GROOVY_PROG_FB, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_prog_fb, 6, 0);
+  m_groovy_prog_fb->SetDescription(
+      tr("Only needed when the MiSTer's output goes through its scandoubler or HDMI. A CRT TV "
+         "shows interlaced 480i natively.<br><br><dolphin_emphasis>If unsure, leave this "
+         "unchecked.</dolphin_emphasis>"));
+  groovy_mister_layout->addWidget(m_groovy_prog_fb, 3, 0, 1, 2);
 
   m_groovy_audio = new ConfigBool(tr("Send Audio"), Config::GFX_GROOVY_AUDIO, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_audio, 7, 0);
+  m_groovy_audio->SetDescription(
+      tr("Plays the game's sound through the MiSTer. Audio also has to be turned on in the Groovy "
+         "core's own menu on the MiSTer (Audio > Audio: On)."));
+  groovy_mister_layout->addWidget(m_groovy_audio, 4, 0, 1, 2);
+
+  m_groovy_prefer_240p = new ConfigBool(tr("Use 240p for This Game (retro/2D games)"),
+                                        Config::GFX_GROOVY_PREFER_240P, m_game_layer);
+  m_groovy_prefer_240p->SetDescription(
+      tr("Switches 15 kHz NTSC modes to 240p, like the original consoles for retro collections "
+         "and 2D games. Recommended games have this turned on automatically; turn it off in the "
+         "game's Properties if you prefer 480i. Ignored for VGA (31 kHz) and 50 Hz games."
+         "<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>"));
+  groovy_mister_layout->addWidget(m_groovy_prefer_240p, 5, 0, 1, 2);
 
   m_groovy_preview = new ConfigBool(tr("Show Sent Frame Window (troubleshooting)"),
                                     Config::GFX_GROOVY_PREVIEW, m_game_layer);
@@ -189,45 +197,31 @@ void GeneralWidget::CreateWidgets()
          "sending the frame, not in Dolphin. Not needed for streaming: Dolphin's normal game "
          "window shows the same picture.<br><br><dolphin_emphasis>If unsure, leave this "
          "unchecked.</dolphin_emphasis>"));
-  groovy_mister_layout->addWidget(m_groovy_preview, 8, 0, 1, 2);
-
-  m_groovy_console_size = new ConfigBool(tr("Real Console Picture Size (fixes overscan)"),
-                                         Config::GFX_GROOVY_CONSOLE_SIZE, m_game_layer);
-  m_groovy_console_size->SetDescription(
-      tr("Outputs the picture at the same size and position as a real GameCube or Wii, using "
-         "the video timing the game sets up. When unchecked, the picture fills the whole line "
-         "and its edges can be cut off by the TV's overscan. Applies to 15 kHz modes."
-         "<br><br><dolphin_emphasis>If unsure, leave this checked.</dolphin_emphasis>"));
-  groovy_mister_layout->addWidget(m_groovy_console_size, 9, 0, 1, 2);
-
-  m_groovy_prefer_240p = new ConfigBool(tr("Use 240p for This Game (retro/2D games)"),
-                                        Config::GFX_GROOVY_PREFER_240P, m_game_layer);
-  m_groovy_prefer_240p->SetDescription(
-      tr("Switches 15 kHz NTSC modes to 240p, like the original consoles for retro collections "
-         "and 2D games. Recommended games have this turned on automatically; turn it off in the "
-         "game's Properties if you prefer 480i. Ignored for VGA (31 kHz) and 50 Hz games."
-         "<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>"));
-  groovy_mister_layout->addWidget(m_groovy_prefer_240p, 10, 0, 1, 2);
+  groovy_mister_layout->addWidget(m_groovy_preview, 6, 0, 1, 2);
 
   auto* groovy_video_groupbox = new QGroupBox(tr("TV/Monitor"));
   auto* groovy_video_vboxlayout = new QVBoxLayout;
   groovy_video_groupbox->setLayout(groovy_video_vboxlayout);
 
-  // Order must match Config::GroovyVideoMode.
-  const std::array<const char*, 4> groovy_modes = {{
-      QT_TR_NOOP("Auto NTSC/PAL (15 kHz)"),
-      QT_TR_NOOP("NTSC, Force 240p (15 kHz)"),
-      QT_TR_NOOP("NTSC Only (15 kHz)"),
-      QT_TR_NOOP("VGA (31 kHz)"),
+  // Values are Config::GroovyVideoMode. GV_NTSC ("NTSC Only") is no longer offered: Auto handles
+  // 60 Hz games the same way, and NTSC Only just made 50 Hz games run 20% fast.
+  const std::array<std::pair<const char*, Config::GroovyVideoMode>, 3> groovy_modes = {{
+      {QT_TR_NOOP("Auto NTSC/PAL (15 kHz TV)"), Config::GroovyVideoMode::GV_15KHZ},
+      {QT_TR_NOOP("Force 240p (15 kHz TV)"), Config::GroovyVideoMode::GV_15KHZ_240P},
+      {QT_TR_NOOP("VGA (31 kHz monitor only)"), Config::GroovyVideoMode::GV_VGA},
   }};
   for (size_t i = 0; i < groovy_modes.size(); i++)
   {
-    m_groovy_video_mode[i] = new ConfigRadioInt(tr(groovy_modes[i]), Config::GFX_GROOVY_VIDEO_MODE,
-                                                static_cast<int>(i), m_game_layer);
+    m_groovy_video_mode[i] =
+        new ConfigRadioInt(tr(groovy_modes[i].first), Config::GFX_GROOVY_VIDEO_MODE,
+                           static_cast<int>(groovy_modes[i].second), m_game_layer);
     groovy_video_vboxlayout->addWidget(m_groovy_video_mode[i]);
   }
+  m_groovy_video_mode[2]->SetDescription(
+      tr("For 31 kHz monitors only. Never use this with a regular CRT TV: it can't display it, and "
+         "a 31 kHz signal can strain a 15 kHz TV."));
   groovy_video_vboxlayout->addStretch();
-  groovy_mister_layout->addWidget(groovy_video_groupbox, 0, 3, 4, 1);
+  groovy_mister_layout->addWidget(groovy_video_groupbox, 0, 3, 5, 1);
 
   groovy_mister_box->setLayout(groovy_mister_layout);
 
@@ -309,9 +303,6 @@ void GeneralWidget::OnEmulationStateChanged(bool running)
   // Groovy MiSTer: connection settings only apply when emulation starts.
   m_groovy_enable->setEnabled(!running);
   m_groovy_ip->setEnabled(!running);
-  m_groovy_jumbo->setEnabled(!running);
-  m_groovy_lz4->setEnabled(!running);
-  m_groovy_lz4_delta->setEnabled(!running);
   m_groovy_prog_fb->setEnabled(!running);
 
   const bool supports_adapters = !g_backend_info.Adapters.empty();

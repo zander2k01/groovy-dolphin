@@ -482,7 +482,8 @@ void MiSTer::Blit(uint16_t vsync, uint8_t field)
 
     //int matchDelta = m_buffer_prog ? m_match : 0;
     int matchDelta = 0;
-    if (m_delta_frames || !m_buffer_prog) //only blit 1 field from progressive bytes
+    // Copy the frame (or one field of it) from m_texture_bytes into the send buffer. The presenter
+    // always writes m_texture_bytes, so this copy is what keeps sending and drawing apart.
     {
       // The presenter writes m_texture_bytes on the GPU thread; don't read a half-written frame.
       std::lock_guard texture_lock(m_texture_mutex);

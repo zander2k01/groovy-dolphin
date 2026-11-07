@@ -24,15 +24,10 @@ namespace Config
 // Configuration Information
 extern const Info<bool> GFX_GROOVY_ENABLE;
 extern const Info<bool> GFX_GROOVY_AUTO_VSYNC;
-extern const Info<bool> GFX_GROOVY_SCALE;
 extern const Info<int> GFX_GROOVY_VSYNC;
-extern const Info<bool> GFX_GROOVY_LZ4;
-extern const Info<bool> GFX_GROOVY_LZ4_DELTA;
-extern const Info<bool> GFX_GROOVY_JUMBO;
 extern const Info<bool> GFX_GROOVY_PROG_FB;
 extern const Info<bool> GFX_GROOVY_AUDIO;
 extern const Info<bool> GFX_GROOVY_PREVIEW;
-extern const Info<bool> GFX_GROOVY_CONSOLE_SIZE;
 extern const Info<bool> GFX_GROOVY_PREFER_240P;
 enum class GroovyVideoMode
 {
