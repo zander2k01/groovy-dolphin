@@ -1,7 +1,9 @@
-# Builds Groovy Dolphin for Windows x64 and uploads it as a downloadable zip.
+# Builds Groovy Dolphin for Windows x64.
 #
-# To download a build: open the "Actions" tab on GitHub, click the newest
-# "Windows build" run, and download "groovy-dolphin-windows-x64" at the bottom.
+# Every successful build of port-to-latest replaces the "latest" release, so this
+# link always has the newest zip (no GitHub sign-in needed):
+# https://github.com/zander2k01/groovy-dolphin/releases/download/latest/groovy-dolphin-windows-x64.zip
+# Each run also keeps the zip as an artifact on its Actions page for 30 days.
 
 name: Windows build
 
@@ -11,7 +13,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write  # to update the "latest" release
 
 concurrency:
   group: windows-build-${{ github.ref }}
@@ -87,6 +89,7 @@ jobs:
           $np_desc = [regex]::Match($scmrev, 'SCM_UPSTREAM_DESC_STR "([^"]*)"').Groups[1].Value
           $np_rev = [regex]::Match($scmrev, 'SCM_UPSTREAM_REV_STR "([^"]*)"').Groups[1].Value
           if (-not $np_desc) { $np_desc = "unknown (official history was not found)" }
+          "NETPLAY_DESC=$np_desc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           @"
           Groovy Dolphin (port-to-latest)
           Commit: ${{ github.sha }}
@@ -95,7 +98,7 @@ jobs:
           Original Groovy work by Sergi Clara (psakhis) and Martin Dahl (m-dahl).
 
           This folder is portable: settings and saves are stored in the "User" folder here.
-          Groovy settings: Graphics > General > Groovy MiSTer.
+          Groovy settings: Settings > Graphics > General > Groovy MiSTer.
 
           NetPlay: compatible with official Dolphin $np_desc (commit $np_rev).
           A friend on a regular PC needs that exact official development build from
@@ -110,3 +113,23 @@ jobs:
           path: build/release/x64/Binaries/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build/release/x64/Binaries/*" -DestinationPath groovy-dolphin-windows-x64.zip -Force
+          Get-Item groovy-dolphin-windows-x64.zip | Format-Table Name, Length
+
+      - name: Update the "latest" release
+        if: github.ref == 'refs/heads/port-to-latest'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release create latest groovy-dolphin-windows-x64.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Latest build" \
+            --latest \
+            --notes "Newest Windows build of port-to-latest (commit ${GITHUB_SHA:0:10}). Unzip anywhere and run Dolphin.exe. NetPlay works with official Dolphin ${NETPLAY_DESC}."
