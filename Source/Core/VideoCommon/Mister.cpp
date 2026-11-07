@@ -364,62 +364,51 @@ void MiSTer::Blit(uint16_t vsync, uint8_t field)
     //int matchDelta = m_buffer_prog ? m_match : 0;
     int matchDelta = 0;
     if (m_delta_frames || !m_buffer_prog) //only blit 1 field from progressive bytes
-    {     
+    {
+      // The presenter writes m_texture_bytes on the GPU thread; don't read a half-written frame.
+      std::lock_guard texture_lock(m_texture_mutex);
+
       uint8_t* tmp_buffer = (uint8_t*) gmw_get_pBufferBlit(field);
-      uint8_t* tmp_buffer_delta = (uint8_t*) gmw_get_pBufferBlitDelta();      
+      uint8_t* tmp_buffer_delta = (uint8_t*) gmw_get_pBufferBlitDelta();
+      const uint8_t* texture = reinterpret_cast<const uint8_t*>(m_texture_bytes);
       int dst_buff = 0;
       int src_buff = field ? m_real_width * 3 : 0;
-     
+
       for (int y = 0; y < m_real_height; y++)
       {
         for (int x = 0; x < m_real_width; x++)
         {
-          if (m_delta_frames)
+          for (int c = 0; c < 3; c++)
           {
-            if (g_mister.m_texture_bytes[src_buff + 0] == tmp_buffer[dst_buff + 0])
+            // Read each byte once. tmp_buffer is our copy of what the MiSTer is showing, and the
+            // delta sent must be exactly (new - tmp_buffer), or the two drift apart and the
+            // difference stays on screen for good.
+            const uint8_t current = texture[src_buff + c];
+            if (m_delta_frames)
             {
-              matchDelta++;
-              tmp_buffer_delta[dst_buff + 0] = 0x00;
+              const uint8_t previous = tmp_buffer[dst_buff + c];
+              if (current == previous)
+              {
+                matchDelta++;
+                tmp_buffer_delta[dst_buff + c] = 0x00;
+              }
+              else
+              {
+                tmp_buffer_delta[dst_buff + c] = static_cast<uint8_t>(current - previous);
+              }
             }
-            else
-            {
-              tmp_buffer_delta[dst_buff + 0] = (uint8_t)g_mister.m_texture_bytes[src_buff + 0] -
-                                               (uint8_t)tmp_buffer[dst_buff + 0];
-            }
-            if (g_mister.m_texture_bytes[src_buff + 1] == tmp_buffer[dst_buff + 1])
-            {
-              matchDelta++;
-              tmp_buffer_delta[dst_buff + 1] = 0x00;
-            }
-            else
-            {
-              tmp_buffer_delta[dst_buff + 1] = (uint8_t)g_mister.m_texture_bytes[src_buff + 1] -
-                                               (uint8_t)tmp_buffer[dst_buff + 1];
-            }
-            if (g_mister.m_texture_bytes[src_buff + 2] == tmp_buffer[dst_buff + 2])
-            {
-              matchDelta++;
-              tmp_buffer_delta[dst_buff + 2] = 0x00;
-            }
-            else
-            {
-              tmp_buffer_delta[dst_buff + 2] = (uint8_t)g_mister.m_texture_bytes[src_buff + 2] -
-                                               (uint8_t)tmp_buffer[dst_buff + 2];
-            }
+            tmp_buffer[dst_buff + c] = current;
           }
-          tmp_buffer[dst_buff + 0] = g_mister.m_texture_bytes[src_buff + 0];
-          tmp_buffer[dst_buff + 1] = g_mister.m_texture_bytes[src_buff + 1];
-          tmp_buffer[dst_buff + 2] = g_mister.m_texture_bytes[src_buff + 2];
           dst_buff += 3;
           src_buff += 3;
-        }                
+        }
         if (!m_buffer_prog)
         {
           y++;
           src_buff += m_real_width * 3;
-        }                
-      }          
-    } 
+        }
+      }
+    }
     gmw_blit(m_frame, field, vsync, 15000, matchDelta);
     gmw_waitSync();
   }

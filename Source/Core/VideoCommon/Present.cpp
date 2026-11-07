@@ -1070,7 +1070,9 @@ void Presenter::Present(PresentInfo* present_info)
           int w = output->GetConfig().width;
           int h = output->GetConfig().height;
           int stride = static_cast<int>(output->GetMappedStride());
-          // Dump to MiSTer progressive buffer
+          // Dump to MiSTer progressive buffer. Hold the lock until the frame is complete, so
+          // MiSTer::Blit (CPU thread) never reads a half-written frame.
+          std::lock_guard texture_lock(g_mister.m_texture_mutex);
           char* tmp_buffer = g_mister.m_texture_bytes;
           if (!Config::Get(Config::GFX_GROOVY_LZ4_DELTA) && !g_mister.isInterlaced())
             tmp_buffer = g_mister.getPBufferBlit();

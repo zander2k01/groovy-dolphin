@@ -39,6 +39,8 @@ public:
   bool isPAL(void);
   
   char m_texture_bytes[704 * 538 * 3]; // always progressive when outputs interlaced to alternate fields  
+  // Guards m_texture_bytes: written by the presenter (GPU thread), read by Blit (CPU thread).
+  std::mutex m_texture_mutex;
 
   // PC preview: a copy of the last frame sent to the MiSTer (BGR, 3 bytes per pixel), so it
   // can be shown in a window on the PC (e.g. for streaming on Discord).
