@@ -978,10 +978,14 @@ void Presenter::Present(PresentInfo* present_info)
     {
       // Check resolution
       {
-        auto mode = Config::Get(Config::GFX_GROOVY_VIDEO_MODE);
-        // "NTSC Only" was removed from the settings; treat old saved values as Auto.
-        if (mode == Config::GroovyVideoMode::GV_NTSC)
-          mode = Config::GroovyVideoMode::GV_15KHZ;
+        // The display type picks the video mode and whether to use a progressive framebuffer.
+        const auto display = Config::Get(Config::GFX_GROOVY_DISPLAY);
+        auto mode = display == Config::GroovyDisplay::CrtTv240p ?
+                        Config::GroovyVideoMode::GV_15KHZ_240P :
+                    display == Config::GroovyDisplay::VgaMonitor ?
+                        Config::GroovyVideoMode::GV_VGA :
+                        Config::GroovyVideoMode::GV_15KHZ;
+        const bool progressive_fb = display == Config::GroovyDisplay::Hdmi;
         // The game's own frame size. m_xfb_rect is multiplied by the internal resolution, which
         // made the mode selection (e.g. 448 vs 480 lines) pick the wrong mode above 1x.
         u32 res_w = m_last_xfb_width;
@@ -1009,7 +1013,7 @@ void Presenter::Present(PresentInfo* present_info)
         if (g_mister.getMode() != video_mode)
         {
           NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer video_mode changed from {} to {}, switchres {}x{}@{}", g_mister.getMode(), video_mode, res_w, res_h, refresh);
-          g_mister.Switchres(video_mode, res_w, res_h, refresh, Config::Get(Config::GFX_GROOVY_PROG_FB));
+          g_mister.Switchres(video_mode, res_w, res_h, refresh, progressive_fb);
         }
         if (!timing_changed && res_w == g_mister.getWidth() && g_mister.getRealHeight() > 0 &&
             g_mister.getRealHeight() <= 288 && res_h > g_mister.getRealHeight() && video_mode == 1)
@@ -1018,7 +1022,7 @@ void Presenter::Present(PresentInfo* present_info)
         else if (timing_changed || res_w != g_mister.getWidth() || res_h != g_mister.getHeight() || (refresh < 55 && !g_mister.isPAL()) || (refresh > 55 && g_mister.isPAL()))
         {
           NOTICE_LOG_FMT(VIDEO, "GroovyMiSTer video_mode {} switchres {}x{}@{}", video_mode, res_w, res_h, refresh);
-          g_mister.Switchres(video_mode, res_w, res_h, refresh, Config::Get(Config::GFX_GROOVY_PROG_FB));
+          g_mister.Switchres(video_mode, res_w, res_h, refresh, progressive_fb);
         }
 
         // Scale or render fb as is

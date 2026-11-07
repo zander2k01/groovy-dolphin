@@ -15,10 +15,9 @@ namespace Config
 const Info<bool> GFX_GROOVY_ENABLE{{System::GFX, "Groovy", "GroovyEnable"}, false};
 const Info<bool> GFX_GROOVY_AUTO_VSYNC{{System::GFX, "Groovy", "AutoVSync"}, false};
 const Info<int> GFX_GROOVY_VSYNC{{System::GFX, "Groovy", "VSync"}, 100};
-const Info<GroovyVideoMode> GFX_GROOVY_VIDEO_MODE{{System::GFX, "Groovy", "VideoMode"},
-                                                  GroovyVideoMode::GV_15KHZ};
+const Info<GroovyDisplay> GFX_GROOVY_DISPLAY{{System::GFX, "Groovy", "Display"},
+                                             GroovyDisplay::CrtTv};
 const Info<std::string> GFX_GROOVY_IP{{System::GFX, "Groovy", "MisterIp"}, ""};
-const Info<bool> GFX_GROOVY_PROG_FB{{System::GFX, "Groovy", "GroovyProgFB"}, false};
 const Info<bool> GFX_GROOVY_AUDIO{{System::GFX, "Groovy", "GroovyAudio"}, true};
 const Info<bool> GFX_GROOVY_PREVIEW{{System::GFX, "Groovy", "PCPreview"}, false};
 const Info<bool> GFX_GROOVY_PREFER_240P{{System::GFX, "Groovy", "Prefer240p"}, false};

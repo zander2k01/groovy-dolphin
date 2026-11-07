@@ -25,10 +25,10 @@ namespace Config
 extern const Info<bool> GFX_GROOVY_ENABLE;
 extern const Info<bool> GFX_GROOVY_AUTO_VSYNC;
 extern const Info<int> GFX_GROOVY_VSYNC;
-extern const Info<bool> GFX_GROOVY_PROG_FB;
 extern const Info<bool> GFX_GROOVY_AUDIO;
 extern const Info<bool> GFX_GROOVY_PREVIEW;
 extern const Info<bool> GFX_GROOVY_PREFER_240P;
+// Video mode sent to the MiSTer (derived from GroovyDisplay).
 enum class GroovyVideoMode
 {
   GV_15KHZ,
@@ -36,7 +36,16 @@ enum class GroovyVideoMode
   GV_NTSC,
   GV_VGA,
 };
-extern const Info<GroovyVideoMode> GFX_GROOVY_VIDEO_MODE;
+
+// What the MiSTer is connected to. Picks the video mode and framebuffer type.
+enum class GroovyDisplay
+{
+  CrtTv,        // 15 kHz: 480i (240p for retro games), 576i for PAL
+  CrtTv240p,    // 15 kHz: 240p for every game (288p for PAL)
+  VgaMonitor,   // 31 kHz PC CRT monitor: 480p
+  Hdmi,         // MiSTer's HDMI output / scaler: 15 kHz modes with a progressive framebuffer
+};
+extern const Info<GroovyDisplay> GFX_GROOVY_DISPLAY;
 extern const Info<std::string> GFX_GROOVY_IP;
 
 // Graphics.Hardware

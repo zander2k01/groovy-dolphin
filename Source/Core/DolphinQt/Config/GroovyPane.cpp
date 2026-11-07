@@ -3,7 +3,6 @@
 
 #include "DolphinQt/Config/GroovyPane.h"
 
-#include <utility>
 
 #include <QFormLayout>
 #include <QGroupBox>
@@ -16,8 +15,8 @@
 #include "Core/System.h"
 
 #include "DolphinQt/Config/ConfigControls/ConfigBool.h"
+#include "DolphinQt/Config/ConfigControls/ConfigChoice.h"
 #include "DolphinQt/Config/ConfigControls/ConfigInteger.h"
-#include "DolphinQt/Config/ConfigControls/ConfigRadio.h"
 #include "DolphinQt/Config/ConfigControls/ConfigText.h"
 #include "DolphinQt/Settings.h"
 
@@ -62,45 +61,36 @@ void GroovyPane::CreateWidgets()
   auto* picture_layout = new QVBoxLayout;
   picture_box->setLayout(picture_layout);
 
-  // Values are Config::GroovyVideoMode. GV_NTSC ("NTSC Only") is no longer offered: Auto handles
-  // 60 Hz games the same way, and NTSC Only just made 50 Hz games run 20% fast.
-  const std::array<std::pair<const char*, Config::GroovyVideoMode>, 3> modes = {{
-      {QT_TR_NOOP("Auto NTSC/PAL (15 kHz TV)"), Config::GroovyVideoMode::GV_15KHZ},
-      {QT_TR_NOOP("Force 240p (15 kHz TV)"), Config::GroovyVideoMode::GV_15KHZ_240P},
-      {QT_TR_NOOP("VGA (31 kHz monitor only)"), Config::GroovyVideoMode::GV_VGA},
-  }};
-  for (size_t i = 0; i < modes.size(); i++)
-  {
-    m_video_mode[i] = new ConfigRadioInt(tr(modes[i].first), Config::GFX_GROOVY_VIDEO_MODE,
-                                         static_cast<int>(modes[i].second), m_game_layer);
-    picture_layout->addWidget(m_video_mode[i]);
-  }
-  m_video_mode[0]->SetDescription(
-      tr("For CRT TVs. 60 Hz games play at 480i (or 240p for some), 50 Hz PAL games at 576i."
-         "<br><br><dolphin_emphasis>If unsure, select this.</dolphin_emphasis>"));
-  m_video_mode[1]->SetDescription(
-      tr("Plays every game at 240p (288p for 50 Hz games), like older consoles. Sharper and "
-         "without interlace flicker, but with half the lines."));
-  m_video_mode[2]->SetDescription(
-      tr("For 31 kHz monitors only. Never use this with a regular CRT TV: it can't display it, and "
-         "a 31 kHz signal can strain a 15 kHz TV."));
+  // Values are Config::GroovyDisplay.
+  m_display = new ConfigChoice({tr("CRT TV (15 kHz)"), tr("CRT TV (15 kHz), 240p for every game"),
+                                tr("PC CRT monitor (31 kHz)"),
+                                tr("Modern TV through the MiSTer's HDMI")},
+                               Config::GFX_GROOVY_DISPLAY, m_game_layer);
+  m_display->SetTitle(tr("Display"));
+  m_display->SetDescription(
+      tr("What the MiSTer is connected to. This picks the video mode for you.<br><br>"
+         "<b>CRT TV (15 kHz)</b>: regular CRT TVs and PVMs. 480i, 240p for retro games that have "
+         "it turned on, and 576i for 50 Hz PAL games.<br><br>"
+         "<b>CRT TV, 240p for every game</b>: like above, but every game plays at 240p (288p for "
+         "PAL). Sharper and without interlace flicker, but with half the lines.<br><br>"
+         "<b>PC CRT monitor (31 kHz)</b>: VGA monitors. 480p. Never use this with a regular CRT "
+         "TV: it can't display it, and a 31 kHz signal can strain a 15 kHz TV.<br><br>"
+         "<b>Modern TV through the MiSTer's HDMI</b>: sends full frames instead of interlaced "
+         "fields, which the MiSTer's scaler handles better.<br><br>"
+         "<dolphin_emphasis>If unsure, select CRT TV (15 kHz).</dolphin_emphasis>"));
+  auto* display_layout = new QFormLayout;
+  display_layout->addRow(tr("Display:"), m_display);
+  picture_layout->addLayout(display_layout);
 
   m_prefer_240p = new ConfigBool(tr("Use 240p for This Game (retro/2D games)"),
                                  Config::GFX_GROOVY_PREFER_240P, m_game_layer);
   m_prefer_240p->SetDescription(
-      tr("With Auto, plays this game at 240p instead of 480i, like the original consoles for "
-         "retro collections and 2D games. Recommended games have this turned on automatically; "
-         "turn it off in the game's Properties if you prefer 480i. Ignored for VGA and 50 Hz "
-         "games.<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>"));
-  picture_layout->addWidget(m_prefer_240p);
-
-  m_prog_fb = new ConfigBool(tr("Progressive Framebuffer (for scandoubler)"),
-                             Config::GFX_GROOVY_PROG_FB, m_game_layer);
-  m_prog_fb->SetDescription(
-      tr("Only needed when the MiSTer's output goes through its scandoubler or HDMI. A CRT TV "
-         "shows interlaced 480i natively.<br><br><dolphin_emphasis>If unsure, leave this "
+      tr("With a CRT TV display, plays this game at 240p instead of 480i, like the original "
+         "consoles for retro collections and 2D games. Recommended games have this turned on "
+         "automatically; turn it off in the game's Properties if you prefer 480i. Ignored for "
+         "PC monitors and 50 Hz games.<br><br><dolphin_emphasis>If unsure, leave this "
          "unchecked.</dolphin_emphasis>"));
-  picture_layout->addWidget(m_prog_fb);
+  picture_layout->addWidget(m_prefer_240p);
 
   // Sound
   auto* sound_box = new QGroupBox(tr("Sound"));
@@ -152,8 +142,8 @@ void GroovyPane::CreateWidgets()
 
 void GroovyPane::OnEmulationStateChanged(bool running)
 {
-  // The connection and framebuffer type are only set up when a game starts.
+  // The connection and display type are only set up when a game starts.
   m_enable->setEnabled(!running);
   m_ip->setEnabled(!running);
-  m_prog_fb->setEnabled(!running);
+  m_display->setEnabled(!running);
 }

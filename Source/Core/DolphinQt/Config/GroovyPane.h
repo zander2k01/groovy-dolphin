@@ -3,13 +3,12 @@
 
 #pragma once
 
-#include <array>
 
 #include <QWidget>
 
 class ConfigBool;
+class ConfigChoice;
 class ConfigInteger;
-class ConfigRadioInt;
 class ConfigText;
 
 namespace Config
@@ -34,9 +33,8 @@ private:
 
   ConfigBool* m_enable;
   ConfigText* m_ip;
-  std::array<ConfigRadioInt*, 3> m_video_mode{};
+  ConfigChoice* m_display;
   ConfigBool* m_prefer_240p;
-  ConfigBool* m_prog_fb;
   ConfigBool* m_audio;
   ConfigBool* m_auto_vsync;
   ConfigInteger* m_vsync;
