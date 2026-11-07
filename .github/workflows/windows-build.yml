@@ -30,6 +30,13 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Fetch official Dolphin history (for NetPlay version matching)
+        shell: pwsh
+        run: |
+          git remote add upstream https://github.com/dolphin-emu/dolphin.git
+          git fetch --no-tags upstream master
+          git fetch --no-tags upstream "refs/tags/2*:refs/tags/2*"
+
       - name: Configure
         shell: pwsh
         run: >
@@ -76,6 +83,10 @@ jobs:
           # Portable mode: settings and saves stay inside this folder, separate from
           # any regular Dolphin install on the same PC.
           New-Item -ItemType File -Path (Join-Path $bin "portable.txt") -Force | Out-Null
+          $scmrev = Get-Content "build/release/x64/Source/Core/Common/scmrev.h" -Raw
+          $np_desc = [regex]::Match($scmrev, 'SCM_UPSTREAM_DESC_STR "([^"]*)"').Groups[1].Value
+          $np_rev = [regex]::Match($scmrev, 'SCM_UPSTREAM_REV_STR "([^"]*)"').Groups[1].Value
+          if (-not $np_desc) { $np_desc = "unknown (official history was not found)" }
           @"
           Groovy Dolphin (port-to-latest)
           Commit: ${{ github.sha }}
@@ -85,6 +96,10 @@ jobs:
 
           This folder is portable: settings and saves are stored in the "User" folder here.
           Groovy settings: Graphics > General > Groovy MiSTer.
+
+          NetPlay: compatible with official Dolphin $np_desc (commit $np_rev).
+          A friend on a regular PC needs that exact official development build from
+          https://dolphin-emu.org/download/ (it is also shown in Help > About).
           "@ | Set-Content -Path (Join-Path $bin "README-GROOVY.txt")
           Get-ChildItem $bin | Format-Table Name, Length
 

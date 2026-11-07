@@ -28,6 +28,25 @@ if(GIT_FOUND)
     OUTPUT_VARIABLE DOLPHIN_WC_TAG
     OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_QUIET)
+
+  # Groovy MiSTer: find the official Dolphin commit this build is based on, so NetPlay can
+  # connect to an official Dolphin build of that same commit. This needs the official
+  # history as "upstream/master" (git remote "upstream" = dolphin-emu/dolphin) and its
+  # release tags. If it can't be found, NetPlay uses this build's own revision.
+  # defines DOLPHIN_UPSTREAM_REVISION and DOLPHIN_UPSTREAM_DESCRIBE
+  execute_process(WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    COMMAND ${GIT_EXECUTABLE} merge-base HEAD refs/remotes/upstream/master
+    OUTPUT_VARIABLE DOLPHIN_UPSTREAM_REVISION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET)
+  if(DOLPHIN_UPSTREAM_REVISION)
+    execute_process(WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      COMMAND ${GIT_EXECUTABLE} describe --always --long ${DOLPHIN_UPSTREAM_REVISION}
+      OUTPUT_VARIABLE DOLPHIN_UPSTREAM_DESCRIBE
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET)
+    string(REGEX REPLACE "(-0)?-[^-]+$" "" DOLPHIN_UPSTREAM_DESCRIBE "${DOLPHIN_UPSTREAM_DESCRIBE}")
+  endif()
 endif()
 
 string(TIMESTAMP DOLPHIN_WC_BUILD_DATE "%Y-%m-%d" UTC)

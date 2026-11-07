@@ -16,5 +16,11 @@ const std::string& GetUserAgentStr();
 const std::string& GetScmDistributorStr();
 const std::string& GetScmUpdateTrackStr();
 const std::string& GetNetplayDolphinVer();
+
+// Groovy MiSTer: the revision and version name NetPlay uses to decide whether two builds can
+// play together. These are the official Dolphin commit this build is based on (when known), so
+// this build can play with an official Dolphin build of that same commit.
+const std::string& GetNetplayRevStr();
+const std::string& GetNetplayDescStr();
 int GetScmCommitsAheadMaster();
 }  // namespace Common

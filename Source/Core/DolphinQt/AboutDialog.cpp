@@ -45,7 +45,8 @@ AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent)
 
 <p style='font-size: small;'>
 %BRANCH%<br>
-%REVISION%<br><br>
+%REVISION%<br>
+%NETPLAY_COMPAT%<br><br>
 %QT_VERSION%<br>
 %SDL_VERSION%
 </p>
@@ -74,6 +75,11 @@ AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent)
                    tr("Branch: %1").arg(branch_str))
           .replace(QStringLiteral("%REVISION%"),
                    tr("Revision: %1").arg(QString::fromUtf8(Common::GetScmRevGitStr().c_str())))
+          .replace(QStringLiteral("%NETPLAY_COMPAT%"),
+                   // Groovy MiSTer: which official Dolphin build this one can NetPlay with.
+                   tr("NetPlay compatible with official Dolphin %1 (%2)")
+                       .arg(QString::fromStdString(Common::GetNetplayDescStr()),
+                            QString::fromStdString(Common::GetNetplayRevStr().substr(0, 10))))
           .replace(QStringLiteral("%QT_VERSION%"),
                    tr("Using Qt %1").arg(QStringLiteral(QT_VERSION_STR)))
 #ifdef HAVE_SDL3

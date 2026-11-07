@@ -99,4 +99,17 @@ int GetScmCommitsAheadMaster()
   return SCM_COMMITS_AHEAD_MASTER + 0;
 }
 
+const std::string& GetNetplayRevStr()
+{
+  static const std::string netplay_rev_str =
+      std::string(SCM_UPSTREAM_REV_STR).empty() ? SCM_REV_STR : SCM_UPSTREAM_REV_STR;
+  return netplay_rev_str;
+}
+
+const std::string& GetNetplayDescStr()
+{
+  static const std::string netplay_desc_str =
+      std::string(SCM_UPSTREAM_DESC_STR).empty() ? SCM_DESC_STR : SCM_UPSTREAM_DESC_STR;
+  return netplay_desc_str;
+}
 }  // namespace Common
