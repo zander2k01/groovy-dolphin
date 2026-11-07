@@ -29,6 +29,7 @@
 #include "DolphinQt/Config/ConfigControls/ConfigRadio.h"
 #include "DolphinQt/Config/GameConfigEdit.h"
 #include "DolphinQt/Config/Graphics/GraphicsPane.h"
+#include "DolphinQt/Config/GroovyPane.h"
 #include "DolphinQt/QtUtils/QtUtils.h"
 #include "DolphinQt/QtUtils/WrapInScrollArea.h"
 
@@ -207,6 +208,9 @@ void GameConfigWidget::CreateWidgets()
 
   auto* const gfx_widget = new GraphicsPane{nullptr, m_layer.get()};
   tab_widget->addTab(gfx_widget, tr("Graphics"));
+
+  // Groovy MiSTer settings for this game (e.g. 240p).
+  tab_widget->addTab(GetWrappedWidget(new GroovyPane{m_layer.get()}), tr("Groovy MiSTer"));
 
   const int editor_index = tab_widget->addTab(advanced_widget, tr("Editor"));
 

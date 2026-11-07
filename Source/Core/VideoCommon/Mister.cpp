@@ -83,7 +83,7 @@ void MiSTer::Init(const char* mister_host, short mister_port, uint8_t lz4_frames
 
   if (m_host.empty())
   {
-    ShowMessage("enter your MiSTer's IP address in Settings > Graphics (Groovy MiSTer box)", 2500,
+    ShowMessage("enter your MiSTer's IP address in Settings > Groovy MiSTer", 2500,
                 OSD::Color::RED);
     return;
   }

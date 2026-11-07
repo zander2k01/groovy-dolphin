@@ -23,7 +23,6 @@
 #include "DolphinQt/Config/ConfigControls/ConfigChoice.h"
 #include "DolphinQt/Config/ConfigControls/ConfigInteger.h"
 #include "DolphinQt/Config/ConfigControls/ConfigRadio.h"
-#include "DolphinQt/Config/ConfigControls/ConfigText.h"
 #include "DolphinQt/Config/GameConfigWidget.h"
 #include "DolphinQt/Config/Graphics/GraphicsPane.h"
 #include "DolphinQt/Config/ToolTipControls/ToolTipComboBox.h"
@@ -141,94 +140,10 @@ void GeneralWidget::CreateWidgets()
   shader_compilation_layout->addWidget(m_wait_for_shaders);
   shader_compilation_box->setLayout(shader_compilation_layout);
 
-  // Groovy MiSTer
-  auto* groovy_mister_box = new QGroupBox(tr("Groovy MiSTer"));
-  auto* groovy_mister_layout = new QGridLayout();
-
-  m_groovy_enable =
-      new ConfigBool(tr("Enable MiSTer Output"), Config::GFX_GROOVY_ENABLE, m_game_layer);
-  m_groovy_enable->SetDescription(
-      tr("Sends the picture, sound and controller input to and from a MiSTer running the Groovy "
-         "core, to play on a CRT. Picture size, compression and timing are set automatically."));
-  groovy_mister_layout->addWidget(m_groovy_enable, 0, 0);
-
-  groovy_mister_layout->addWidget(new QLabel(tr("MiSTer IP:")), 1, 0);
-  m_groovy_ip = new ConfigText(Config::GFX_GROOVY_IP, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_ip, 1, 1);
-
-  m_groovy_auto_vsync = new ConfigBool(tr("Automatic V-Sync (or choose line to sync)"),
-                                       Config::GFX_GROOVY_AUTO_VSYNC, m_game_layer);
-  m_groovy_auto_vsync->SetDescription(
-      tr("Latency tuning. When checked, the MiSTer picks when to show each frame by itself. "
-         "When unchecked, frames are synced to the scanline chosen on the right."
-         "<br><br><dolphin_emphasis>If unsure, leave this as it is.</dolphin_emphasis>"));
-  groovy_mister_layout->addWidget(m_groovy_auto_vsync, 2, 0);
-  m_groovy_vsync = new ConfigInteger(1, 400, Config::GFX_GROOVY_VSYNC, m_game_layer);
-  groovy_mister_layout->addWidget(m_groovy_vsync, 2, 1);
-
-  m_groovy_prog_fb = new ConfigBool(tr("Progressive Framebuffer (for scandoubler)"),
-                                    Config::GFX_GROOVY_PROG_FB, m_game_layer);
-  m_groovy_prog_fb->SetDescription(
-      tr("Only needed when the MiSTer's output goes through its scandoubler or HDMI. A CRT TV "
-         "shows interlaced 480i natively.<br><br><dolphin_emphasis>If unsure, leave this "
-         "unchecked.</dolphin_emphasis>"));
-  groovy_mister_layout->addWidget(m_groovy_prog_fb, 3, 0, 1, 2);
-
-  m_groovy_audio = new ConfigBool(tr("Send Audio"), Config::GFX_GROOVY_AUDIO, m_game_layer);
-  m_groovy_audio->SetDescription(
-      tr("Plays the game's sound through the MiSTer. Audio also has to be turned on in the Groovy "
-         "core's own menu on the MiSTer (Audio > Audio: On)."));
-  groovy_mister_layout->addWidget(m_groovy_audio, 4, 0, 1, 2);
-
-  m_groovy_prefer_240p = new ConfigBool(tr("Use 240p for This Game (retro/2D games)"),
-                                        Config::GFX_GROOVY_PREFER_240P, m_game_layer);
-  m_groovy_prefer_240p->SetDescription(
-      tr("Switches 15 kHz NTSC modes to 240p, like the original consoles for retro collections "
-         "and 2D games. Recommended games have this turned on automatically; turn it off in the "
-         "game's Properties if you prefer 480i. Ignored for VGA (31 kHz) and 50 Hz games."
-         "<br><br><dolphin_emphasis>If unsure, leave this unchecked.</dolphin_emphasis>"));
-  groovy_mister_layout->addWidget(m_groovy_prefer_240p, 5, 0, 1, 2);
-
-  m_groovy_preview = new ConfigBool(tr("Show Sent Frame Window (troubleshooting)"),
-                                    Config::GFX_GROOVY_PREVIEW, m_game_layer);
-  m_groovy_preview->SetDescription(
-      tr("Opens a separate window that shows each frame exactly as it's sent to the MiSTer, "
-         "before compression. If this window looks right but the CRT doesn't, the problem is in "
-         "sending the frame, not in Dolphin. Not needed for streaming: Dolphin's normal game "
-         "window shows the same picture.<br><br><dolphin_emphasis>If unsure, leave this "
-         "unchecked.</dolphin_emphasis>"));
-  groovy_mister_layout->addWidget(m_groovy_preview, 6, 0, 1, 2);
-
-  auto* groovy_video_groupbox = new QGroupBox(tr("TV/Monitor"));
-  auto* groovy_video_vboxlayout = new QVBoxLayout;
-  groovy_video_groupbox->setLayout(groovy_video_vboxlayout);
-
-  // Values are Config::GroovyVideoMode. GV_NTSC ("NTSC Only") is no longer offered: Auto handles
-  // 60 Hz games the same way, and NTSC Only just made 50 Hz games run 20% fast.
-  const std::array<std::pair<const char*, Config::GroovyVideoMode>, 3> groovy_modes = {{
-      {QT_TR_NOOP("Auto NTSC/PAL (15 kHz TV)"), Config::GroovyVideoMode::GV_15KHZ},
-      {QT_TR_NOOP("Force 240p (15 kHz TV)"), Config::GroovyVideoMode::GV_15KHZ_240P},
-      {QT_TR_NOOP("VGA (31 kHz monitor only)"), Config::GroovyVideoMode::GV_VGA},
-  }};
-  for (size_t i = 0; i < groovy_modes.size(); i++)
-  {
-    m_groovy_video_mode[i] =
-        new ConfigRadioInt(tr(groovy_modes[i].first), Config::GFX_GROOVY_VIDEO_MODE,
-                           static_cast<int>(groovy_modes[i].second), m_game_layer);
-    groovy_video_vboxlayout->addWidget(m_groovy_video_mode[i]);
-  }
-  m_groovy_video_mode[2]->SetDescription(
-      tr("For 31 kHz monitors only. Never use this with a regular CRT TV: it can't display it, and "
-         "a 31 kHz signal can strain a 15 kHz TV."));
-  groovy_video_vboxlayout->addStretch();
-  groovy_mister_layout->addWidget(groovy_video_groupbox, 0, 3, 5, 1);
-
-  groovy_mister_box->setLayout(groovy_mister_layout);
 
   main_layout->addWidget(m_video_box);
   main_layout->addWidget(m_options_box);
   main_layout->addWidget(shader_compilation_box);
-  main_layout->addWidget(groovy_mister_box);
   main_layout->addStretch();
 
   setLayout(main_layout);
@@ -299,11 +214,6 @@ void GeneralWidget::OnEmulationStateChanged(bool running)
   m_backend_combo->setEnabled(!running);
   m_render_main_window->setEnabled(!running);
   m_enable_fullscreen->setEnabled(!running);
-
-  // Groovy MiSTer: connection settings only apply when emulation starts.
-  m_groovy_enable->setEnabled(!running);
-  m_groovy_ip->setEnabled(!running);
-  m_groovy_prog_fb->setEnabled(!running);
 
   const bool supports_adapters = !g_backend_info.Adapters.empty();
   m_adapter_combo->setEnabled(!running && supports_adapters);

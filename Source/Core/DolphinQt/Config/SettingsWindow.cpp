@@ -18,6 +18,7 @@
 
 #include "DolphinQt/Config/ControllersPane.h"
 #include "DolphinQt/Config/Graphics/GraphicsPane.h"
+#include "DolphinQt/Config/GroovyPane.h"
 #include "DolphinQt/MainWindow.h"
 #include "DolphinQt/QtUtils/QtUtils.h"
 #include "DolphinQt/QtUtils/WrapInScrollArea.h"
@@ -193,6 +194,7 @@ SettingsWindow::SettingsWindow(MainWindow* parent) : StackedSettingsWindow{paren
   // If you change the order, don't forget to update the SettingsWindowPaneIndex enum.
   AddWrappedPane(new GeneralPane, tr("General"));
   AddPane(new GraphicsPane{parent, nullptr}, tr("Graphics"));
+  AddWrappedPane(new GroovyPane, tr("Groovy MiSTer"));
   AddWrappedPane(new ControllersPane, tr("Controllers"));
   AddWrappedPane(new InterfacePane, tr("Interface"));
   AddWrappedPane(new OnScreenDisplayPane, tr("On-Screen Display"));

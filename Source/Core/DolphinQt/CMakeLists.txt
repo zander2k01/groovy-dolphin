@@ -132,6 +132,8 @@ add_executable(dolphin-emu
   Config/HardcoreWarningWidget.h
   Config/InfoWidget.cpp
   Config/InfoWidget.h
+  Config/GroovyPane.cpp
+  Config/GroovyPane.h
   Config/LogConfigWidget.cpp
   Config/LogConfigWidget.h
   Config/LogWidget.cpp
