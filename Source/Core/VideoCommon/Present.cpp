@@ -983,8 +983,10 @@ void Presenter::Present(PresentInfo* present_info)
       // Check resolution
       {
         auto mode = Config::Get(Config::GFX_GROOVY_VIDEO_MODE);
-        u32 res_w = m_xfb_rect.GetWidth();
-        u32 res_h = m_xfb_rect.GetHeight();
+        // The game's own frame size. m_xfb_rect is multiplied by the internal resolution, which
+        // made the mode selection (e.g. 448 vs 480 lines) pick the wrong mode above 1x.
+        u32 res_w = m_last_xfb_width;
+        u32 res_h = m_last_xfb_height;
         auto& video_interface = Core::System::GetInstance().GetVideoInterface();
         double refresh = video_interface.GetTargetRefreshRate();
 
@@ -1030,7 +1032,10 @@ void Presenter::Present(PresentInfo* present_info)
           u32 real_height =
               g_mister.getMode() == 1 ? g_mister.getRealHeight() * 2 : g_mister.getRealHeight();
 
-          if (Config::Get(Config::GFX_GROOVY_SCALE) &&
+          // Always scale when the internal resolution is above 1x, so the MiSTer gets the
+          // game's resolution (downsampled, which also smooths edges).
+          const bool upscaled = width != res_w || height != res_h;
+          if ((Config::Get(Config::GFX_GROOVY_SCALE) || upscaled) &&
               (width != g_mister.getRealWidth() || height != real_height) &&
               g_mister.getRealWidth() && g_mister.getRealHeight())
           {

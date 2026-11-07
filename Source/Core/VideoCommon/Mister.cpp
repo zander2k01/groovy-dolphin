@@ -81,6 +81,13 @@ void MiSTer::Init(const char* mister_host, short mister_port, uint8_t lz4_frames
   m_host = mister_host;
   m_last_attempt = std::chrono::steady_clock::now();
 
+  if (m_host.empty())
+  {
+    ShowMessage("enter your MiSTer's IP address in Settings > Graphics (Groovy MiSTer box)", 2500,
+                OSD::Color::RED);
+    return;
+  }
+
   gmw_bindInputs(mister_host);
   if (gmw_init(mister_host, lz4_frames, sound_rate, sound_chan, rgb_mode, mister_mtu) < 0)
   {
