@@ -41,10 +41,6 @@ If the MiSTer isn't ready yet, Dolphin keeps trying on its own and tells you wha
 - NetPlay works with friends on official Dolphin, as long as they use the version shown in Help > About
 - A bunch of smaller fixes (audio crackle, a possible crash with PAL games, the controller code)
 
-## Known issues
-
-I've mostly tested on my own setup (Windows, a Sony Trinitron, Pikmin 2), so other games and TVs might do weird things. If something looks off, tick **Show Sent Frame Window** in Settings > Groovy MiSTer. If that window looks fine but the CRT doesn't, the problem is in the sending part.
-
 ---
 
 # Dolphin - A GameCube and Wii Emulator
