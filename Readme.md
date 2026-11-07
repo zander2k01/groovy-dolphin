@@ -23,7 +23,7 @@ Unzip it anywhere and run Dolphin.exe. It's portable, so your settings and saves
 ## Setup
 
 1. Load **Utility > Groovy** on the MiSTer.
-2. In Dolphin go to **Settings > Graphics**. In the Groovy MiSTer box, tick **Enable MiSTer Output** and type in your MiSTer's IP.
+2. In Dolphin go to **Settings > Groovy MiSTer**, tick **Enable MiSTer Output** and type in your MiSTer's IP.
 3. Pick a TV mode (Auto NTSC/PAL for a normal CRT TV, don't use VGA unless you have a 31 kHz monitor) and start a game.
 
 If the MiSTer isn't ready yet, Dolphin keeps trying on its own and tells you what's going on in its window.
@@ -32,7 +32,7 @@ If the MiSTer isn't ready yet, Dolphin keeps trying on its own and tells you wha
 
 - Based on current Dolphin instead of a 2024 one
 - The picture is the same size as on a real GameCube now, so the edges don't get cut off (the overscan problem psakhis mentioned)
-- Way fewer settings. Stuff like compression and picture size just works now, so you only really need the IP and the TV mode
+- Way fewer settings, and they have their own page now. Stuff like compression and picture size just works, so you only really need the IP and the TV mode
 - Got rid of Delta Frames, which left junk on screen and isn't needed on a wired connection
 - Reconnects by itself if the Groovy core gets started late or restarted
 - On-screen messages for things like "can't find the MiSTer" or "audio is off in the Groovy core"
@@ -43,7 +43,7 @@ If the MiSTer isn't ready yet, Dolphin keeps trying on its own and tells you wha
 
 ## Known issues
 
-I've mostly tested on my own setup (Windows, a Sony Trinitron, Pikmin 2), so other games and TVs might do weird things. If something looks off, tick **Show Sent Frame Window** in the Groovy settings. If that window looks fine but the CRT doesn't, the problem is in the sending part.
+I've mostly tested on my own setup (Windows, a Sony Trinitron, Pikmin 2), so other games and TVs might do weird things. If something looks off, tick **Show Sent Frame Window** in Settings > Groovy MiSTer. If that window looks fine but the CRT doesn't, the problem is in the sending part.
 
 ---
 

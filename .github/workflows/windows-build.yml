@@ -98,7 +98,7 @@ jobs:
           Original Groovy work by Sergi Clara (psakhis) and Martin Dahl (m-dahl).
 
           This folder is portable: settings and saves are stored in the "User" folder here.
-          Groovy settings: Settings > Graphics > General > Groovy MiSTer.
+          Groovy settings: Settings > Groovy MiSTer (and a Groovy MiSTer tab in each game's Properties).
 
           NetPlay: compatible with official Dolphin $np_desc (commit $np_rev).
           A friend on a regular PC needs that exact official development build from
