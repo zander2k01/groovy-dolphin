@@ -2,7 +2,7 @@
 #
 # Every successful build of port-to-latest replaces the "latest" release, so this
 # link always has the newest zip (no GitHub sign-in needed):
-# https://github.com/zander2k01/groovy-dolphin/releases/download/latest/groovy-dolphin-windows-x64.zip
+# https://github.com/zander2k1/groovy-dolphin/releases/download/latest/groovy-dolphin-windows-x64.zip
 # Each run also keeps the zip as an artifact on its Actions page for 30 days.
 
 name: Windows build

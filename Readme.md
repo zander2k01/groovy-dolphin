@@ -8,7 +8,7 @@ None of this would exist without psakhis, who made the Groovy core and the newes
 
 ## Download
 
-**[Latest Windows build](https://github.com/zander2k01/groovy-dolphin/releases/download/latest/groovy-dolphin-windows-x64.zip)**
+**[Latest Windows build](https://github.com/zander2k1/groovy-dolphin/releases/download/latest/groovy-dolphin-windows-x64.zip)**
 
 Unzip it anywhere and run Dolphin.exe. The build is portable: settings and saves are stored in that folder and do not affect a regular Dolphin installation.
 
