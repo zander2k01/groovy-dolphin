@@ -37,6 +37,7 @@ If the MiSTer is not ready yet, Dolphin retries automatically and shows the conn
 - Simplified settings on a dedicated page (Settings > Groovy MiSTer). In most cases you only choose a display type and enter the MiSTer's IP address. Each display type is a preset, and all of its output settings are shown underneath. Choosing **Custom** makes every output option from psakhis's build editable (video mode, progressive framebuffer, picture size, scaling, LZ4, Delta Frames and Jumbo Frames)
 - Fixed Delta Frames leaving parts of old frames on screen. Delta Frames are now off by default and available under Custom
 - Automatic reconnection if the Groovy core is started late or restarted
+- Can start the Groovy core on the MiSTer by itself, with the optional [groovy_wake](https://github.com/zander2k1/Main_MiSTer_Groovy#start-the-groovy-core-from-the-pc-optional) helper installed on the MiSTer
 - On-screen status messages (for example when the MiSTer cannot be reached or audio is disabled in the Groovy core)
 - Per-game 240p setting, enabled by default for several retro collections (Sonic, Mega Man, Midway, Namco Museum)
 - PAL games run at the correct speed in 240p mode (output as 288p at 50 Hz)

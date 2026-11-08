@@ -65,6 +65,7 @@ GroovyOutputSettings GetGroovyOutputSettings()
 }
 const Info<std::string> GFX_GROOVY_IP{{System::GFX, "Groovy", "MisterIp"}, ""};
 const Info<bool> GFX_GROOVY_AUDIO{{System::GFX, "Groovy", "GroovyAudio"}, true};
+const Info<bool> GFX_GROOVY_START_CORE{{System::GFX, "Groovy", "StartCore"}, true};
 const Info<bool> GFX_GROOVY_PREVIEW{{System::GFX, "Groovy", "PCPreview"}, false};
 const Info<bool> GFX_GROOVY_PREFER_240P{{System::GFX, "Groovy", "Prefer240p"}, false};
 

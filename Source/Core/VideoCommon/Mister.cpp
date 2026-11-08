@@ -93,11 +93,19 @@ void MiSTer::Init(const char* mister_host, short mister_port, uint8_t lz4_frames
   {
     // No answer. Dolphin retries every few seconds (see ShouldRetry), so it's fine if the Groovy
     // core is started after the game.
+    // Ask the MiSTer to start the Groovy core (needs the groovy_wake helper on the MiSTer, which
+    // ignores repeats while the core is loading).
+    const bool start_core = Config::Get(Config::GFX_GROOVY_START_CORE);
+    if (start_core)
+      gmw_wakeCore(mister_host);
     // Shown on every attempt, slightly longer than the retry interval, so it stays up while
     // retrying and disappears once connected.
-    ShowMessage(fmt::format("no answer from {}. Is the Groovy core running on the MiSTer? "
-                            "Retrying...",
-                            mister_host),
+    ShowMessage(start_core ? fmt::format("no answer from {}, starting the Groovy core on the "
+                                         "MiSTer...",
+                                         mister_host) :
+                             fmt::format("no answer from {}. Is the Groovy core running on the "
+                                         "MiSTer? Retrying...",
+                                         mister_host),
                 2500, OSD::Color::RED);
   }
   else

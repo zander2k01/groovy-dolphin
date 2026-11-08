@@ -60,6 +60,14 @@ void GroovyPane::CreateWidgets()
   m_ip->setPlaceholderText(tr("e.g. 192.168.1.105"));
   connection_layout->addRow(tr("MiSTer IP:"), m_ip);
 
+  auto* start_core = new ConfigBool(tr("Start the Groovy Core on the MiSTer Automatically"),
+                                    Config::GFX_GROOVY_START_CORE, m_game_layer);
+  start_core->SetDescription(
+      tr("If the MiSTer doesn't answer, ask it to start the Groovy core, even if another core is "
+         "running. Needs the small groovy_wake helper installed on the MiSTer (see "
+         "Main_MiSTer_Groovy on GitHub); without it nothing happens."));
+  connection_layout->addRow(start_core);
+
   // Picture
   auto* picture_box = new QGroupBox(tr("Picture"));
   auto* picture_layout = new QVBoxLayout;

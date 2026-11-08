@@ -26,6 +26,7 @@ extern const Info<bool> GFX_GROOVY_ENABLE;
 extern const Info<bool> GFX_GROOVY_AUTO_VSYNC;
 extern const Info<int> GFX_GROOVY_VSYNC;
 extern const Info<bool> GFX_GROOVY_AUDIO;
+extern const Info<bool> GFX_GROOVY_START_CORE;
 extern const Info<bool> GFX_GROOVY_PREVIEW;
 extern const Info<bool> GFX_GROOVY_PREFER_240P;
 // Video mode sent to the MiSTer (derived from GroovyDisplay, or chosen directly with Custom).
