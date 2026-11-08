@@ -86,6 +86,7 @@ private:
   bool m_audio_warning_shown = false;
   bool m_pal_message_shown = false;
   uint32_t m_last_echo = 0;
+  uint32_t m_last_mister_frame = 0;
   std::chrono::steady_clock::time_point m_last_attempt{};
   std::chrono::steady_clock::time_point m_last_echo_time{};
   std::chrono::steady_clock::time_point m_last_blit_time{};

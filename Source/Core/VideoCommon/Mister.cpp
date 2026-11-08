@@ -130,6 +130,7 @@ void MiSTer::Init(const char* mister_host, short mister_port, uint8_t lz4_frames
   m_mode = 9;
   m_match = 0;
   m_last_echo = 0;
+  m_last_mister_frame = 0;
   m_last_echo_time = m_last_blit_time = std::chrono::steady_clock::now();
 }
 
@@ -555,6 +556,21 @@ void MiSTer::CheckConnection()
   if (now - m_last_blit_time > std::chrono::seconds(1))
     m_last_echo_time = now;
   m_last_blit_time = now;
+
+  // The MiSTer's frame counter went backwards: the Groovy core was restarted. It needs a fresh
+  // connection (video mode and all) before it shows anything again.
+  if (status.frame + 60 < m_last_mister_frame)
+  {
+    ShowMessage("the Groovy core restarted, reconnecting...", OSD::Duration::NORMAL,
+                OSD::Color::YELLOW);
+    gmw_reset();
+    m_connected = false;
+    m_lost = true;
+    m_last_mister_frame = 0;
+    m_last_attempt = now - RETRY_INTERVAL;
+    return;
+  }
+  m_last_mister_frame = status.frame;
 
   if (status.frameEcho != m_last_echo)
   {
